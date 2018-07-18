@@ -26,4 +26,11 @@ class METSignificance:
         self.res_phi        = ROOT.JME.JetResolution("%s/%s_PhiResolution_AK4PFchs.txt"%(self.JERdirectory, self.JERera))
         self.jer_SF         = ROOT.JME.JetResolutionScaleFactor("%s/%s_SF_AK4PFchs.txt"%(self.JERdirectory, self.JERera))
 
+    
+    def calculate(self, event):
+        event.METSignificance = 0.
+    
+    def setParameters(self, parameterList):
+        event.parameters = [0]
+
 
