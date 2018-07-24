@@ -119,9 +119,9 @@ if isMC:
     from nanoMET.tools.puReweighting import getReweightingFunction
     mcProfile = "Summer16"
     # nTrueIntReweighting
-    nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc=mcProfile)
-    nTrueInt36fb_puRWDown    = getReweightingFunction(data="PU_2016_36000_XSecDown",    mc=mcProfile)
-    nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc=mcProfile)
+    nTrueInt_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc=mcProfile)
+    nTrueInt_puRWDown    = getReweightingFunction(data="PU_2016_36000_XSecDown",    mc=mcProfile)
+    nTrueInt_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc=mcProfile)
 
 ## top pt reweighting to be added later
 #
@@ -160,8 +160,11 @@ branchKeepStrings_DATAMC = [\
 
 #branches to be kept for MC samples only
 branchKeepStrings_MC = [\
-    "nTrueInt", "genWeight", "xsec", "met_gen*", "lheHTIncoming",
-    "ngenPartAll","genPartAll_*","ngenLep","genLep_*"
+    #"nTrueInt", 
+    "genWeight", "LHE_HTIncoming",
+    "LHEWeight_originalXWGTUP","nLHEPdfWeight","LHEPdfWeight","nLHEScaleWeight","LHEScaleWeight",
+    "nGenPart","GenPart_*",
+    "GenMET_pt", "GenMET_phi",
 ]
 
 #branches to be kept for data only
@@ -191,7 +194,7 @@ else:
 read_variables = map(TreeVariable.fromString, ['MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 new_variables = [ 'weight/F']
 if isMC:
-    read_variables+= map(TreeVariable.fromString, ['genWeight/F', 'nTrueInt/F'] )
+    read_variables+= map(TreeVariable.fromString, ['genWeight/F', 'PV_npvsGood/I'] )
 if isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 
 
@@ -217,9 +220,9 @@ def filler( event ):
         event.jsonPassed  = lumiList.contains(r.run, r.luminosityBlock)
 
     if isMC:
-        event.reweightPU        = nTrueInt_puRW     ( r.nTrueInt ) 
-        event.reweightPUDown    = nTrueInt_puRWDown ( r.nTrueInt ) 
-        event.reweightPUUp      = nTrueInt_puRWUp   ( r.nTrueInt ) 
+        event.reweightPU        = nTrueInt_puRW     ( r.PV_npvsGood ) 
+        event.reweightPUDown    = nTrueInt_puRWDown ( r.PV_npvsGood ) 
+        event.reweightPUUp      = nTrueInt_puRWUp   ( r.PV_npvsGood ) 
 
 
 # Create a maker. Maker class will be compiled. This instance will be used as a parent in the loop
