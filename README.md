@@ -13,7 +13,9 @@ git checkout
 scram b -j 8
 
 git clone https://github.com/schoef/RootTools.git
+git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 git clone https://github.com/danbarto/nanoMET.git
 cd $CMSSW_BASE/src
+scram b -j 8
 cmsenv
 ```
