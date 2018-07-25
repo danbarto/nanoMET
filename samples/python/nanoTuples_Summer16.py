@@ -2,6 +2,8 @@ import copy, os, sys
 from RootTools.core.Sample import Sample
 import ROOT
 
+
+## these should go somewhere else
 dbFile = '/afs/hephy.at/data/dspitzbart01/nanoAOD/DB_Summer16.sql'
 dataDirectory = '/afs/hephy.at/data/dspitzbart01/nanoAOD/Summer16/'
 
