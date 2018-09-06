@@ -1,15 +1,15 @@
 '''
-a
+
 '''
 
 # Standard imports
 import ROOT
 import os
 import sys
-import pickle
 import math
 import copy
 import itertools
+import json
 
 from RootTools.core.standard import *
 
@@ -18,11 +18,13 @@ from nanoMET.core.Likelihood import minLL
 
 class run:
 
-    def __init__(self, samples, selection):
+    def __init__(self, samples, selection, outfile="results/tune"):
+        # Need fill a list in order to do the minimization, reading from the tree is too slow
 
         self.eventlist = []
         self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumEt/F', 'MET_significance/F'] )
         self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F]' ) ]
+        self.outfile = outfile
 
         for s in samples:
             s.setSelectionString(selection)
@@ -43,13 +45,14 @@ class run:
 
     def getLL(self, args):
         # recalculate MET Significance, Determinant and LL for given parameters
+        # although it uses C methods it's still rather slow
         LLs = map(lambda x: x.METSignificance(args), self.eventlist)
         LL = sum(LLs)
         
         return LL
 
 
-    def minimize(self, start=[1.0, 1.0, 1.0, 1.0, 1.0, 0., .5], step=[0.05]*7):
+    def minimize(self, start=[1.0, 1.0, 1.0, 1.0, 1.0, 0., .5], step=[0.05]*7, maxSig = 9):
         gmin = ROOT.Math.Factory.CreateMinimizer("Minuit2")
         gmin.SetTolerance(10.0)
         gmin.SetStrategy(0)
@@ -72,6 +75,27 @@ class run:
     
         gmin.Minimize()
 
+        #filter events with high significance
+        self.eventlist = [x  for x in self.eventlist if x.MET_sig < maxSig ]
+        
+        print
+        print 'Now fitting after applying significance cut'
+        print 'Total events:',len(self.eventlist)
+        
+        gmin.SetStrategy(1)
+        gmin.Minimize()
+        gmin.Hesse()
+        
+        pars = [gmin.X()[i] for i in range(0,7)]
+        uncs = [gmin.Errors()[i] for i in range(0,7)]
+        
+        with open(self.outfile+'.txt', 'w') as of:
+            json.dump(pars, of)
+        with open(self.outfile+'_unc.txt', 'w') as of:
+            json.dump(uncs, of)
+    
+
+
 
 if __name__ == '__main__':
 
@@ -85,7 +109,7 @@ if __name__ == '__main__':
 
     r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
     
-    minimize = False
+    minimize = True
     if minimize:
 
         r.minimize()
