@@ -25,12 +25,14 @@ class Event:
         MS.getJER(event)
 
         self.nJet       = event.nJet
-        self.Jet_pt     = [ x for x in event.Jet_pt     if x > 0 ]
-        self.Jet_eta    = [ x for x in event.Jet_eta    if not math.isnan(x) ]
-        self.Jet_etabin = [ getBin(abs(x)) for x in self.Jet_eta ]
-        self.Jet_phi    = [ x for x in event.Jet_phi    if not math.isnan(x) ]
-        self.Jet_dpt    = [ x for x in event.Jet_dpt ]
-        self.Jet_dphi   = [ x for x in event.Jet_dphi ]
+        # use the cleanmask from nanoAOD to clean against leptons
+        cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if x>0 ]
+        self.Jet_pt     = [ event.Jet_pt[i]     for i in cleanJetIndices ]
+        self.Jet_eta    = [ event.Jet_eta[i]    for i in cleanJetIndices ]
+        self.Jet_etabin = [ getBin(abs(x))      for x in self.Jet_eta ]
+        self.Jet_phi    = [ event.Jet_phi[i]    for i in cleanJetIndices ]
+        self.Jet_dpt    = [ event.Jet_dpt[i]    for i in cleanJetIndices ]
+        self.Jet_dphi   = [ event.Jet_dphi[i]   for i in cleanJetIndices ]
 
         self.MET_pt             = event.MET_pt
         self.MET_phi            = event.MET_phi

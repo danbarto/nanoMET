@@ -23,7 +23,7 @@ class run:
 
         self.eventlist = []
         self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumEt/F', 'MET_significance/F'] )
-        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F]' ) ]
+        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O]' ) ]
         self.outfile = outfile
 
         for s in samples:
@@ -100,12 +100,14 @@ class run:
 if __name__ == '__main__':
 
     from StopsDilepton.samples.nanoTuples_Summer16_postProcessed import *
+    #from StopsDilepton.samples.nanoTuples_Fall17_postProcessed import *
 
-    preselection = "nJetGood > 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
+    preselection = "nJetGood >= 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
 
-    DY_LO.reduceFiles( to = 1 )
 
-    r = run([DY_LO], preselection)
+    DY_HT_LO_16.reduceFiles( to = 1 )
+
+    r = run([DY_HT_LO_16], preselection)
 
     r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
     
