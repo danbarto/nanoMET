@@ -23,7 +23,7 @@ class run:
 
         self.eventlist = []
         self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumEt/F', 'MET_significance/F'] )
-        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O]' ) ]
+        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I]' ) ]
         self.outfile = outfile
 
         for s in samples:
@@ -105,9 +105,9 @@ if __name__ == '__main__':
     preselection = "nJetGood >= 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
 
 
-    DY_HT_LO_16.reduceFiles( to = 1 )
+    DY_LO_16.reduceFiles( to = 1 )
 
-    r = run([DY_HT_LO_16], preselection)
+    r = run([DY_LO_16], preselection)
 
     r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
     
