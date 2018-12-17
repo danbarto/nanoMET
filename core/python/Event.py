@@ -20,7 +20,7 @@ def cartesian(pt, phi):
     return (pt*math.cos(phi), pt*math.sin(phi))
 
 class Event:
-    def __init__(self, event):
+    def __init__(self, event, weightModifier=1):
         #self.MS = METSignificance()
         MS.getJER(event)
 
@@ -43,7 +43,7 @@ class Event:
 
 
         self.fixedGridRhoFastjetAll = event.fixedGridRhoFastjetAll
-        self.weight = event.weight
+        self.weight = event.weight * weightModifier
 
     def METSignificance(self, args):
 

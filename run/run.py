@@ -10,6 +10,7 @@ import math
 import copy
 import itertools
 import json
+import random
 
 from RootTools.core.standard import *
 
@@ -18,7 +19,7 @@ from nanoMET.core.Likelihood import minLL
 
 class run:
 
-    def __init__(self, samples, selection, outfile="results/tune"):
+    def __init__(self, samples, selection, outfile="results/tune", maxN=1e6):
         # Need fill a list in order to do the minimization, reading from the tree is too slow
 
         self.eventlist = []
@@ -32,15 +33,31 @@ class run:
             nEvents = s.getYieldFromDraw()
             print "Running over %s events for sample %s."%(nEvents['val'], s.name)
 
+            if nEvents > maxN:
+                weightModifier = nEvents/float(maxN)
+                print "Preliminary factor for modifying the event weight: %s"%weightModifier
+            else:
+                weightModifier = 1
+            
             reader = s.treeReader(variables=self.variables)
             reader.start()
             i = 0
 
+            tmp_eventlist = []
             while reader.run():
-                self.eventlist += [Event(reader.event)]
+                tmp_eventlist += [Event(reader.event, weightModifier=weightModifier)]
+                #self.eventlist += [Event(reader.event)]
                 if i%10000==0:
                     print "Done with %s"%i
                 i += 1
+            
+            ## reduce the sample size
+            if nEvents > maxN:
+                print "Drawing a random subset of %s events"%maxN
+                rand_smpl = [ tmp_eventlist[i] for i in random.sample(xrange(len(tmp_eventlist)), maxN) ]
+                tmp_eventlist = rand_smpl
+
+            self.eventlist += tmp_eventlist
 
 
     def getLL(self, args):
@@ -102,12 +119,14 @@ if __name__ == '__main__':
     from StopsDilepton.samples.nanoTuples_Summer16_postProcessed import *
     #from StopsDilepton.samples.nanoTuples_Fall17_postProcessed import *
 
-    preselection = "nJetGood >= 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
-
+    preselection    = "nJetGood >= 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
+    trigger         = " && ".join([])
+    eventfilter     = " && ".join([])
+    selection       = " && ".join([preselection,trigger,eventfilter])
 
     DY_LO_16.reduceFiles( to = 1 )
 
-    r = run([DY_LO_16], preselection)
+    r = run([DY_LO_16], selection)
 
     r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
     
