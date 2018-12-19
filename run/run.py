@@ -12,50 +12,53 @@ import itertools
 import json
 import random
 
-from RootTools.core.standard import *
+from RootTools.core.standard    import *
 
-from nanoMET.core.Event import Event
-from nanoMET.core.Likelihood import minLL
+from nanoMET.core.Event         import Event
+from nanoMET.core.Likelihood    import minLL
+from nanoMET.tools.progressbar  import update_progress
+from nanoMET.core.JetResolution import JetResolution
+
 
 class run:
 
-    def __init__(self, samples, selection, outfile="results/tune", maxN=1e6):
+    def __init__(self, samples, selection, jetResolution, outfile="results/tune", maxN=1e6):
         # Need fill a list in order to do the minimization, reading from the tree is too slow
 
         self.eventlist = []
-        self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumEt/F', 'MET_significance/F'] )
+        if samples[0].isData:
+            self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F', 'MET_significance/F'] )
+        else:
+            self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F', 'MET_significance/F'] )
         self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I]' ) ]
         self.outfile = outfile
 
         for s in samples:
             s.setSelectionString(selection)
-            
-            nEvents = s.getYieldFromDraw()
+            print "Getting number of events"
+            nEvents = s.getYieldFromDraw(selectionString='(1)', weightString='(1)')
             print "Running over %s events for sample %s."%(nEvents['val'], s.name)
-
+            nEvents = nEvents['val']
             if nEvents > maxN:
                 weightModifier = nEvents/float(maxN)
+                fracToKeep = float(maxN)/nEvents
                 print "Preliminary factor for modifying the event weight: %s"%weightModifier
             else:
                 weightModifier = 1
+                fracToKeep = 1
             
+            print "Filling the eventlist"
             reader = s.treeReader(variables=self.variables)
             reader.start()
             i = 0
-
             tmp_eventlist = []
             while reader.run():
-                tmp_eventlist += [Event(reader.event, weightModifier=weightModifier)]
-                #self.eventlist += [Event(reader.event)]
-                if i%10000==0:
-                    print "Done with %s"%i
-                i += 1
+                i+=1
+                if random.random() < fracToKeep:
+                    tmp_eventlist += [Event(reader.event, jetResolution, weightModifier=weightModifier, isData=s.isData)]
+                update_progress(i/nEvents)
             
-            ## reduce the sample size
-            if nEvents > maxN:
-                print "Drawing a random subset of %s events"%maxN
-                rand_smpl = [ tmp_eventlist[i] for i in random.sample(xrange(len(tmp_eventlist)), maxN) ]
-                tmp_eventlist = rand_smpl
+            print
 
             self.eventlist += tmp_eventlist
 
@@ -63,7 +66,7 @@ class run:
     def getLL(self, args):
         # recalculate MET Significance, Determinant and LL for given parameters
         # although it uses C methods it's still rather slow
-        LLs = map(lambda x: x.METSignificance(args), self.eventlist)
+        LLs = map(lambda x: x.calcLL(args), self.eventlist)
         LL = sum(LLs)
         
         return LL
@@ -116,20 +119,23 @@ class run:
 
 if __name__ == '__main__':
 
-    from StopsDilepton.samples.nanoTuples_Summer16_postProcessed import *
-    #from StopsDilepton.samples.nanoTuples_Fall17_postProcessed import *
+    from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 
-    preselection    = "nJetGood >= 0 && nGoodMuons==2 && nGoodElectrons==0 && l1_pt > 25 && l2_pt > 20 && abs(dl_mass-91.2)<10"
-    trigger         = " && ".join([])
-    eventfilter     = " && ".join([])
-    selection       = " && ".join([preselection,trigger,eventfilter])
+    # define the selection
+    preselection    = "jsonPassed && Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0 && Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0 && abs(dl_mass-91.2)<10"
+    trigger         = " && ".join(['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24'])
+    eventfilter     = " && ".join(['Flag_METFilters','Flag_goodVertices','Flag_HBHENoiseIsoFilter','Flag_HBHENoiseFilter','Flag_globalTightHalo2016Filter','Flag_EcalDeadCellTriggerPrimitiveFilter'])
+    sel             = " && ".join([preselection,trigger,eventfilter])
 
-    DY_LO_16.reduceFiles( to = 1 )
+    JR = JetResolution('Summer16_25nsV1_DATA')
 
-    r = run([DY_LO_16], selection)
+    #DoubleMuon_Run2016.reduceFiles(to=1)
 
-    r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
-    
+    ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
+    r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_test", maxN=1e6)
+
+    LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
+
     minimize = True
     if minimize:
 

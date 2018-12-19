@@ -148,7 +148,7 @@ except:
 #branches to be kept for data and MC
 branchKeepStrings_DATAMC = [\
     "run", "luminosityBlock", "event", "fixedGridRhoFastjetAll", "PV_npvs", "PV_npvsGood",
-    "MET_pt", "MET_phi","MET_MetUnclustEnUpDeltaX", "MET_MetUnclustEnUpDeltaY", "MET_sumEt", "CaloMET_phi", "CaloMET_pt", "CaloMET_sumEt", "MET_covXX", "MET_covXY", "MET_covYY", "MET_significance",
+    "MET_pt", "MET_phi","MET_MetUnclustEnUpDeltaX", "MET_MetUnclustEnUpDeltaY", "MET_sumEt", "MET_sumPt", "CaloMET_phi", "CaloMET_pt", "CaloMET_sumEt", "MET_covXX", "MET_covXY", "MET_covYY", "MET_significance",
     "RawMET_phi", "RawMET_pt", "RawMET_sumEt",
     "Flag_*","HLT_*",
     "nJet", "Jet_*",

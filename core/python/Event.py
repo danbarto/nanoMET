@@ -4,10 +4,6 @@
 
 import math
 
-from nanoMET.core.METSignificance import METSignificance
-
-MS = METSignificance()
-
 etabins = [0.8,1.3,1.9,2.5,100]
 
 def getBin(abseta):
@@ -20,9 +16,8 @@ def cartesian(pt, phi):
     return (pt*math.cos(phi), pt*math.sin(phi))
 
 class Event:
-    def __init__(self, event, weightModifier=1):
-        #self.MS = METSignificance()
-        MS.getJER(event)
+    def __init__(self, event, jetResolution, weightModifier=1, isData=False):
+        jetResolution.getJER(event)
 
         self.nJet       = event.nJet
         # use the cleanmask from nanoAOD to clean against leptons, but don't use jetId as of now
@@ -37,17 +32,17 @@ class Event:
 
         self.MET_pt             = event.MET_pt
         self.MET_phi            = event.MET_phi
-        self.MET_sumEt          = event.MET_sumEt
+        self.MET_sumPt          = event.MET_sumPt
         self.MET_significance   = event.MET_significance
         
 
 
         self.fixedGridRhoFastjetAll = event.fixedGridRhoFastjetAll
-        self.weight = event.weight * weightModifier
+        #self.weight = 1
+        self.weight = event.weight * weightModifier if not isData else weightModifier
 
-    def METSignificance(self, args):
-
-        MS.calculate(self, args)
+    def calcLL(self, args):
+        self.calcMETSig(args)
 
         try:
             LL = self.weight * ( self.MET_sig + math.log(self.det) )
@@ -55,5 +50,56 @@ class Event:
             LL = self.weight * self.MET_sig
 
         return LL
+
+    def calcMETSig(self, args):
+        
+        cov_xx  = 0
+        cov_xy  = 0
+        cov_yy  = 0
+        jet_pt  = self.Jet_pt
+        i = 0
+        for j in jet_pt:
+            j_pt = j
+            j_phi = self.Jet_phi[i]
+            j_sigmapt = self.Jet_dpt[i]
+            j_sigmaphi = self.Jet_dphi[i]
+            index = self.Jet_etabin[i]
+
+            cj = math.cos(j_phi)
+            sj = math.sin(j_phi)
+            dpt = args[index] * j_pt * j_sigmapt
+            dph =               j_pt * j_sigmaphi
+
+            dpt *= dpt
+            dph *= dph
+
+            cov_xx += dpt*cj*cj + dph*sj*sj
+            cov_xy += (dpt-dph)*cj*sj
+            cov_yy += dph*cj*cj + dpt*sj*sj
+
+            i += 1
+
+        # unclustered energy
+        cov_tt = args[5]*args[5] + args[6]*args[6]*self.MET_sumPt
+        cov_xx += cov_tt
+        cov_yy += cov_tt
+
+        det = cov_xx*cov_yy - cov_xy*cov_xy
+
+        if det>0:
+            ncov_xx =  cov_yy / det
+            ncov_xy = -cov_xy / det
+            ncov_yy =  cov_xx / det
+        else:
+            #print cov_xx, cov_yy, cov_xy
+            ncov_xx = cov_xx if cov_xx > 0 else 1
+            ncov_yy = cov_yy if cov_yy > 0 else 1
+            ncov_xy = cov_xy if cov_xy > 0 else 1
+
+        met_x = self.MET_pt * math.cos(self.MET_phi)
+        met_y = self.MET_pt * math.sin(self.MET_phi)
+
+        self.det = det
+        self.MET_sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy
 
 

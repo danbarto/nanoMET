@@ -9,7 +9,7 @@ import os
 import FWCore.ParameterSet.Config as cms
 from RecoMET.METProducers.METSignificanceParams_cfi import *
 
-class METSignificance:
+class JetResolution:
 
     def __init__(self, JERera = 'Spring16_25nsV10_MC'):
         jetCorrParam = ROOT.JetCorrectorParameters()
@@ -36,55 +36,4 @@ class METSignificance:
             event.Jet_dpt    += [ self.res_pt.getResolution(jet) ]
             event.Jet_dphi   += [ self.res_phi.getResolution(jet) ]
             
-    
-    def calculate(self, event, args):
-        
-        cov_xx  = 0
-        cov_xy  = 0
-        cov_yy  = 0
-        jet_pt  = event.Jet_pt
-        i = 0
-        for j in jet_pt:
-            j_pt = j
-            j_phi = event.Jet_phi[i]
-            j_sigmapt = event.Jet_dpt[i]
-            j_sigmaphi = event.Jet_dphi[i]
-            index = event.Jet_etabin[i]
-
-            cj = math.cos(j_phi)
-            sj = math.sin(j_phi)
-            dpt = args[index] * j_pt * j_sigmapt
-            dph =               j_pt * j_sigmaphi
-
-            dpt *= dpt
-            dph *= dph
-
-            cov_xx += dpt*cj*cj + dph*sj*sj
-            cov_xy += (dpt-dph)*cj*sj
-            cov_yy += dph*cj*cj + dpt*sj*sj
-
-            i += 1
-
-        # unclustered energy
-        cov_tt = args[5]*args[5] + args[6]*args[6]*event.MET_sumEt
-        cov_xx += cov_tt
-        cov_yy += cov_tt
-
-        det = cov_xx*cov_yy - cov_xy*cov_xy
-
-        if det>0:
-            ncov_xx =  cov_yy / det
-            ncov_xy = -cov_xy / det
-            ncov_yy =  cov_xx / det
-        else:
-            #print cov_xx, cov_yy, cov_xy
-            ncov_xx = cov_xx if cov_xx > 0 else 1
-            ncov_yy = cov_yy if cov_yy > 0 else 1
-            ncov_xy = cov_xy if cov_xy > 0 else 1
-
-        met_x = event.MET_pt * math.cos(event.MET_phi)
-        met_y = event.MET_pt * math.sin(event.MET_phi)
-
-        event.det = det
-        event.MET_sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy
     
