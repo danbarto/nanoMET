@@ -4,7 +4,7 @@
 import ROOT
 
 # helpers
-from nanoMET.tools.helpers import getObjFromFile
+from StopsDilepton.tools.helpers import getObjFromFile
 
 # Logging
 import logging
@@ -26,7 +26,7 @@ def extendHistoTo(h, hc):
 def getReweightingFunction(data="PU_2100_XSecCentral", mc="Spring15"):
 
     # Data
-    fileNameData = "$CMSSW_BASE/src/nanoMET/tools/data/puReweightingData/%s.root" % data
+    fileNameData = "$CMSSW_BASE/src/StopsDilepton/tools/data/puReweightingData/%s.root" % data
 
     histoData = getObjFromFile(fileNameData, 'pileup')
     histoData.Scale(1./histoData.Integral())
@@ -34,7 +34,7 @@ def getReweightingFunction(data="PU_2100_XSecCentral", mc="Spring15"):
 
     if type(mc)==type(""):
         if mc=='Summer16':
-            mcProfile = extendHistoTo(getObjFromFile("$CMSSW_BASE/src/nanoMET/tools/data/puReweightingData/MCProfile_Summer16.root", 'pileup'), histoData)
+            mcProfile = extendHistoTo(getObjFromFile("$CMSSW_BASE/src/StopsDilepton/tools/data/puReweightingData/MCProfile_Summer16.root", 'pileup'), histoData)
         else:
             raise ValueError( "Don't know about MC PU profile %s" %mc )
     else:
@@ -59,7 +59,7 @@ def getNVTXReweightingFunction(key, filename = "dilepton_allZ_isOS_4000pb4000_80
 
     # 2016 PU reweighting with sigma(QCD) uncertainty
     import pickle, os
-    data = pickle.load( file(os.path.expandvars("$CMSSW_BASE/src/nanoMET/tools/data/puReweightingData/%s" % filename)) )
+    data = pickle.load( file(os.path.expandvars("$CMSSW_BASE/src/StopsDilepton/tools/data/puReweightingData/%s" % filename)) )
     h = data[key]
     def reweightingFunc( nvtx ):
         ib = h.FindBin( nvtx )

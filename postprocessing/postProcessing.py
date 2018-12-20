@@ -11,7 +11,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel       import C
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import Module
 
 # Import modules
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
@@ -36,11 +36,11 @@ logger = _logger.get_logger(options.logLevel, logFile = None)
 # Import samples
 
 #from Samples.nanoAOD.Summer16 import allSamples as Summer16
-from Samples.nanoAOD.Summer16_private import allSamples as Summer16_priv
+from Samples.nanoAOD.Summer16_METSig_v1 import allSamples as Summer16_METSig_v1
 from Samples.nanoAOD.Run2018_26Sep2018_private import allSamples as Run2018_26Sep2018_private
 from Samples.nanoAOD.Run2016_17Jul2018_private import allSamples as Run2016_17Jul2018_private
 
-allSamples = Summer16_priv + Run2018_26Sep2018_private + Run2016_17Jul2018_private
+allSamples = Summer16_METSig_v1 + Run2018_26Sep2018_private + Run2016_17Jul2018_private
 
 print "Searching for sample %s"%options.samples[0]  
 
@@ -79,7 +79,7 @@ elif len(samples)==1:
 else:
     raise ValueError( "Need at least one sample. Got %r",samples )
 
-logger.info("Sample contains files: %s", sample.files)
+logger.info("Sample contains %s files", len(sample.files))
 sample.files = sorted(sample.files) # in order to avoid some random ordered file list, different in each job
 
 # calculate the lumi scale factor for the weight
@@ -104,7 +104,7 @@ isSingleLep     = options.skim.lower().startswith('singlelep')
 
 skimConds = []
 if isDiMuon:
-    skimConds.append( "Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
+    skimConds.append( "Sum$(Muon_pt>15&&abs(Muon_eta)<2.5)>=2" )
 elif isDiLep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
 elif isTriLep:
@@ -118,7 +118,7 @@ logger.info("Using selection: %s", cut)
 
 # Main part
 
-directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/2016_v1/"
+directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/2016_v3/"
 output_directory = os.path.join( directory, options.skim, sample.name )
 
 logger.info("Loading modules.")
@@ -126,6 +126,7 @@ logger.info("Loading modules.")
 if sample.isData:
     modules = [
         METSigTools(),
+        lumiWeightProducer(1, isData=True),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
         applyJSON(json_file)
         # MET significance producer
@@ -133,7 +134,7 @@ if sample.isData:
 
 else:
     modules = [
-        puWeightProducer("auto",pufile_data,"pu_mc","pileup",verbose=False),
+        puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False),
         lumiWeightProducer(lumiScaleFactor),
         METSigTools(),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
