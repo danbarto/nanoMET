@@ -22,14 +22,14 @@ class Event:
         self.nJet       = event.nJet
         # use the cleanmask from nanoAOD to clean against leptons, but don't use jetId as of now
         #cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if (x>0 and event.Jet_jetId[i]>=3) ]
-        cleanmaskLep    = [ i for i,x in enumerate(event.Jet_cleanmask) if x>=0 ]
-        cleanmaskPhot   = [ i for i,x in enumerate(event.Jet_cleanmaskPhoton) if x>=0 ]
+        cleanmaskLep    = [ event.Jet_cleanmask[i] for i in range(self.nJet) ]
+        cleanmaskPhot   = [ i==1 for i in event.Jet_cleanmaskPhoton if i>=0 ]
         cleanJetIndices = []
         if not len(cleanmaskLep) == len(cleanmaskPhot):
             raise ValueError
         else:
-            for i in range(len(cleanmaskLep):
-                if cleanmaskLep[i]>0 and cleanmaskPhot[i]>0:
+            for i in range(len(cleanmaskLep)):
+                if cleanmaskLep[i] and cleanmaskPhot[i]:
                     cleanJetIndices.append(i)
 
         #cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if x>0 ]

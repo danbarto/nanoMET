@@ -32,8 +32,8 @@ sel             = " && ".join([preselection,trigger,eventfilter])
 JR = JetResolution('Summer16_25nsV1_DATA')
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
-DoubleMuon.reduceFiles(to=3)
-r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_test3", maxN=1e5)
+#DoubleMuon_Run2016.reduceFiles(to=3)
+r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_test3", maxN=1e6)
 
 LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 
