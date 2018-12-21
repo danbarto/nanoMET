@@ -118,7 +118,7 @@ logger.info("Using selection: %s", cut)
 
 # Main part
 
-directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/2016_v3/"
+directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/2016_v4/"
 output_directory = os.path.join( directory, options.skim, sample.name )
 
 logger.info("Loading modules.")

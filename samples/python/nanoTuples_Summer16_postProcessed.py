@@ -27,7 +27,7 @@ dirs = {}
 
 dirs['DY_LO']            = ["DYJetsToLL_M50_MLM_S16_94X"]
 
-dirs['TTLep_pow']        = ["TTJets_pow_noSC_S16_94X"]
+dirs['TTLep_pow']        = ["TTJets_lep_pow_noSC_S16_94X"]
 
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 

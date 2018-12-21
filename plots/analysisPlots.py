@@ -131,8 +131,8 @@ for index, mode in enumerate(allModes):
   if   mode=="mumu":
     data_sample = DoubleMuon_Run2016
     data_sample.texName = "data (2 #mu)"
-    #data_selectionString = "jsonPassed"
-    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year).replace('&&weight>0',''), getLeptonSelection(mode), "(%s)"%" || ".join(['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24'])])
+    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year).replace('&&weight>0',''), getLeptonSelection(mode), "( %s )"%" || ".join(['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24'])])
+    # maybe add singleMu backup
     print data_selectionString
     data_sample.setSelectionString([data_selectionString])
   if   mode=="mumu": data_sample.texName = "data (2 #mu)"
@@ -172,7 +172,7 @@ for index, mode in enumerate(allModes):
   plots.append(Plot(
     name = 'yield', texX = 'yield', texY = 'Number of Events',
     attribute = lambda event, sample: 0.5 + index,
-    binning=[3, 0, 3],
+    binning=[1, 0, 1],
   ))
 
   plots.append(Plot(
@@ -282,8 +282,8 @@ for index, mode in enumerate(allModes):
         for j, h in enumerate(l):
           yields[mode][plot.stack[i][j].name] = h.GetBinContent(h.FindBin(0.5+index))
           h.GetXaxis().SetBinLabel(1, "#mu#mu")
-          h.GetXaxis().SetBinLabel(2, "e#mu")
-          h.GetXaxis().SetBinLabel(3, "ee")
+          #h.GetXaxis().SetBinLabel(2, "e#mu")
+          #h.GetXaxis().SetBinLabel(3, "ee")
   if args.noData: yields[mode]["data"] = 0
 
   yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
