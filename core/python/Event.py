@@ -44,7 +44,7 @@ class Event:
         self.MET_pt             = event.MET_pt
         self.MET_phi            = event.MET_phi
         self.MET_sumPt          = event.MET_sumPt
-        self.MET_significance   = event.MET_significance
+        #self.MET_significance   = event.MET_significance # not in nanoAOD right now
         
 
 

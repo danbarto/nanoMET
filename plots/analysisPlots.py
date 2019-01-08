@@ -44,8 +44,9 @@ if args.noData:                       args.plot_directory += "_noData"
 #
 # Make samples, will be searched for in the postProcessing directory
 #
-postProcessing_directory = "2016_v3/dimuon/"
+postProcessing_directory = "2016_v5/dimuon/"
 from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
+postProcessing_directory = "2016_v4/dimuon/"
 from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 
 #
@@ -86,7 +87,7 @@ def drawPlots(plots, mode, dataMCScale):
 #
 # Read variables and sequences
 #
-read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_significance/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I]", "nJet/I"]
+read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskPhoton/I]", "nJet/I"]
 
 sequence = []
 
@@ -145,7 +146,7 @@ for index, mode in enumerate(allModes):
   if args.noData: lumi_scale = 35.9
   weight_ = lambda event, sample: event.weight
 
-  mc = [DY_LO_16, TTLep_pow_16]
+  mc = [DY_LO_16, Top_16, VVTo2L2Nu_16]
 
   for sample in mc: sample.style = styles.fillStyle(sample.color)
 
@@ -193,11 +194,12 @@ for index, mode in enumerate(allModes):
       binning=[10,-pi,pi],
   ))
 
-  plots.append(Plot(
-    texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
-    attribute = TreeVariable.fromString('MET_significance/F'),
-    binning= [50,0,100],
-  ))
+  # removed from nanoAOD
+  #plots.append(Plot(
+  #  texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
+  #  attribute = TreeVariable.fromString('MET_significance/F'),
+  #  binning= [50,0,100],
+  #))
 
   plots.append(Plot(
     texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',

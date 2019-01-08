@@ -25,12 +25,15 @@ logger.info("Loading MC samples from directory %s", os.path.join(data_directory,
 
 dirs = {}
 
-dirs['DY_LO']            = ["DYJetsToLL_M50_MLM_S16_94X"]
+dirs['DY_LO']           = ["DYJetsToLL_M50_LO_ext1"]
 
-dirs['TTLep_pow']        = ["TTJets_lep_pow_noSC_S16_94X"]
+dirs['Top']             = ["TTLep_pow_noSC", "T_tWch_ext", "TBar_tWch_ext"]
+
+dirs['VVTo2L2Nu_comb']  = ['VVTo2L2Nu_ext']
 
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 
 #
-DY_LO_16           = Sample.fromDirectory(name="DY_LO",            treeName="Events", isData=False, color=color.DY,         texName="DY (LO)",                  directory=directories['DY_LO'])
-TTLep_pow_16       = Sample.fromDirectory(name="TTLep_pow",        treeName="Events", isData=False, color=color.TTJets,     texName="t#bar{t}",                 directory=directories['TTLep_pow'])
+DY_LO_16            = Sample.fromDirectory(name="DY_LO",            treeName="Events", isData=False, color=color.DY,         texName="DY (LO)",                  directory=directories['DY_LO'])
+Top_16              = Sample.fromDirectory(name="Top",              treeName="Events", isData=False, color=color.TTJets,     texName="t(#bar{t})",               directory=directories['Top'])
+VVTo2L2Nu_16        = Sample.fromDirectory(name="VVTo2L2Nu",        treeName="Events", isData=False, color=color.diboson,    texName="diboson",                  directory=directories['VVTo2L2Nu_comb'])
