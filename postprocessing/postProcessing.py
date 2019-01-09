@@ -57,15 +57,7 @@ for selectedSample in options.samples:
             logger.info("Sample has normalization %s", sample.normalization)
             sample.normalization = float(sample.normalization)
 
-year = int(options.year)
-if year == 2016:
-    json_file = "$CMSSW_BASE/src/nanoMET/tools/data/json/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
-elif year == 2017:
-    json_file = "$CMSSW_BASE/src/nanoMET/tools/data/json/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
-elif year == 2018:
-    json_file = "$CMSSW_BASE/src/nanoMET/tools/data/json/Cert_314472-317080_13TeV_PromptReco_Collisions18_JSON.txt"
-else:
-    raise ValueError( "Please define a supported year." )
+year = int(options.year) # Not needed atm, but might be needed again at some point
 
 if len(samples)==0:
     logger.info( "No samples found. Was looking for %s. Exiting" % options.samples )
@@ -133,7 +125,7 @@ if sample.isData:
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
-        applyJSON(json_file)
+        applyJSON(s.json) # pickup json from sample, as defined in the Sample repository
         # MET significance producer
     ]
 

@@ -16,5 +16,6 @@
 #python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples TTLep_pow_noSC #SPLIT41
 # doesnt work yet ##python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples VVTo2L2Nu VVTo2L2Nu_ext #SPLIT36
 #python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples VVTo2L2Nu_ext #SPLIT25
-python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples T_tWch_ext #SPLIT12
-python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples TBar_tWch_ext #SPLIT11
+#python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples T_tWch_ext #SPLIT12
+#python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples TBar_tWch_ext #SPLIT11
+python postProcessing.py --skim dimuon --era 2016_v5 --year 2016 --samples WJetsToLNu_ext # SPLIT100
