@@ -32,6 +32,7 @@ class JetResolution:
         event.Jet_dphi = []
         for i in range(event.nJet):
             jet = ROOT.JME.JetParameters()
+            # rho in fact only needed for SF
             jet.setJetEta(event.Jet_eta[i]).setJetPt(event.Jet_pt[i]).setRho(event.fixedGridRhoFastjetAll)
             event.Jet_dpt    += [ self.res_pt.getResolution(jet) ]
             event.Jet_dphi   += [ self.res_phi.getResolution(jet) ]

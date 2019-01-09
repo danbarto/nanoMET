@@ -146,7 +146,7 @@ for index, mode in enumerate(allModes):
   if args.noData: lumi_scale = 35.9
   weight_ = lambda event, sample: event.weight
 
-  mc = [DY_LO_16, Top_16, VVTo2L2Nu_16]
+  mc = [DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16]
 
   for sample in mc: sample.style = styles.fillStyle(sample.color)
 
@@ -224,6 +224,13 @@ for index, mode in enumerate(allModes):
     texX = 'm(ll) of leading dilepton (GeV)', texY = 'Number of Events',
     attribute = TreeVariable.fromString( "dl_mass/F" ),
     binning=[40,81.2,101.2],
+  ))
+
+  plots.append(Plot(
+    texX = 'm(ll) of leading dilepton (GeV)', texY = 'Number of Events',
+    name = "dl_mass_wide",
+    attribute = TreeVariable.fromString( "dl_mass/F" ),
+    binning=[50,20,220],
   ))
 
   plots.append(Plot(

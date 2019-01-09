@@ -27,13 +27,15 @@ class run:
 
         self.eventlist = []
         if samples[0].isData:
-            self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F', 'MET_significance/F'] )
+            self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
         else:
-            self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F', 'MET_significance/F'] )
+            self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
         self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I,cleanmaskPhoton/I]' ) ]
         self.outfile = outfile
 
         for s in samples:
+            print
+            print "Now working on sample: %s"%s.name
             s.setSelectionString(selection)
             print "Getting number of events"
             nEvents = s.getYieldFromDraw(selectionString='(1)', weightString='(1)')

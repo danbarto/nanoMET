@@ -17,9 +17,6 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools       
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.applyJSON             import applyJSON
 
-# from RootTools
-from RootTools.core.standard            import *
-
 # argparser
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser for cmgPostProcessing")
@@ -31,11 +28,13 @@ argParser.add_argument('--nJobs',       action='store', nargs='?', type=int,defa
 argParser.add_argument('--prepare',     action='store_true', help="Prepare, don't acutally run" )
 argParser.add_argument('--year',        action='store', default=None, help="Which year? Important for json file.")
 argParser.add_argument('--era',         action='store', default="2016_v1", help="Which era/subdirectory?")
-#argParser.add_argument(
 options = argParser.parse_args()
 
 import nanoMET.tools.logger as _logger
 logger = _logger.get_logger(options.logLevel, logFile = None)
+
+# from RootTools
+from RootTools.core.standard            import *
 
 # Import samples
 
@@ -89,6 +88,7 @@ else:
 # filebased job splitting
 len_orig = len(sample.files)
 logger.info("Sample has %s files", len_orig)
+json = sample.json # pickup json from sample, as defined in the Sample repository
 sample = sample.split( n=options.nJobs, nSub=options.job)
 
 logger.info("Will run over %s files", len(sample.files))
@@ -125,7 +125,7 @@ if sample.isData:
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
-        applyJSON(s.json) # pickup json from sample, as defined in the Sample repository
+        applyJSON(json)
         # MET significance producer
     ]
 

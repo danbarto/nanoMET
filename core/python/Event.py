@@ -21,6 +21,7 @@ class Event:
 
         self.nJet       = event.nJet
         # use the cleanmask from nanoAOD to clean against leptons, but don't use jetId as of now
+        # additionally, clean against photons. Create a list of jet indices that are cleaned from leptons and photons
         #cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if (x>0 and event.Jet_jetId[i]>=3) ]
         cleanmaskLep    = [ event.Jet_cleanmask[i] for i in range(self.nJet) ]
         cleanmaskPhot   = [ i==1 for i in event.Jet_cleanmaskPhoton if i>=0 ]
@@ -49,10 +50,10 @@ class Event:
 
 
         self.fixedGridRhoFastjetAll = event.fixedGridRhoFastjetAll
-        #self.weight = 1
         self.weight = event.weight * weightModifier if not isData else weightModifier
 
     def calcLL(self, args):
+        # calculate the log likelihood
         self.calcMETSig(args)
 
         try:
