@@ -44,9 +44,9 @@ if args.noData:                       args.plot_directory += "_noData"
 #
 # Make samples, will be searched for in the postProcessing directory
 #
-postProcessing_directory = "2016_v5/dimuon/"
+postProcessing_directory = "2016_v6/dimuon/"
 from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-postProcessing_directory = "2016_v4/dimuon/"
+postProcessing_directory = "2016_v6/dimuon/"
 from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 
 #
@@ -87,7 +87,7 @@ def drawPlots(plots, mode, dataMCScale):
 #
 # Read variables and sequences
 #
-read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskPhoton/I]", "nJet/I"]
+read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I]", "nJet/I"]
 
 sequence = []
 
@@ -97,10 +97,11 @@ JERData = JetResolution('Summer16_25nsV1_DATA')
 JERMC   = JetResolution('Summer16_25nsV1_MC')
 #JERData = JetResolution('Spring16_25nsV6_DATA')
 #JERMC   = JetResolution('Spring16_25nsV6_MC')
-paramsData  = [1.38, 1.27, 1.22, 1.16, 1.10, 0.0, 0.58]
-paramsMC    = [1.39, 1.26, 1.21, 1.23, 1.28, -0.26, 0.62]
-#paramsData  = [1.26, 1.14, 1.13, 1.13, 1.06, -3.3, 0.59]
-#paramsMC    = [1.29, 1.19, 1.07, 1.13, 1.12, -0.04, 0.65]
+#paramsData  = [1.38, 1.27, 1.22, 1.16, 1.10, 0.0, 0.58]
+#paramsMC    = [1.39, 1.26, 1.21, 1.23, 1.28, -0.26, 0.62]
+paramsData  = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
+paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+
 
 def calcMETSig( event, sample ):
     if sample.isData:
@@ -119,6 +120,7 @@ def getLeptonSelection( mode ):
   if   mode=="mumu": return "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0"
 
 nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc="Summer16")
+nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc="Summer16")
 
 #
 # Loop over channels

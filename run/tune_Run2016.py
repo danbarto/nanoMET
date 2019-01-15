@@ -20,7 +20,7 @@ from Samples.Tools.metFilters   import getFilterCut
 
 from run import run
 
-postProcessing_directory = "2016_v4/dimuon/"
+postProcessing_directory = "2016_v6/dimuon/"
 from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 
 # define the selection
@@ -33,7 +33,7 @@ JR = JetResolution('Summer16_25nsV1_DATA')
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
 #DoubleMuon_Run2016.reduceFiles(to=3)
-r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_test3", maxN=1e6)
+r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_17Jul2018_incl_v3", maxN=1e5)
 
 LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 

@@ -30,7 +30,7 @@ class run:
             self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
         else:
             self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
-        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I,cleanmaskPhoton/I]' ) ]
+        self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I,cleanmaskMETSig/I,cleanmaskMETSigRec/I]' ) ]
         self.outfile = outfile
 
         for s in samples:
@@ -121,6 +121,8 @@ class run:
 
 if __name__ == '__main__':
 
+    postProcessing_directory = "2016_v6/dimuon/"
+    from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 
     # define the selection
@@ -129,12 +131,12 @@ if __name__ == '__main__':
     eventfilter     = " && ".join(['Flag_METFilters','Flag_goodVertices','Flag_HBHENoiseIsoFilter','Flag_HBHENoiseFilter','Flag_globalTightHalo2016Filter','Flag_EcalDeadCellTriggerPrimitiveFilter'])
     sel             = " && ".join([preselection,trigger,eventfilter])
 
-    JR = JetResolution('Summer16_25nsV1_DATA')
+    JR = JetResolution('Summer16_25nsV1_MC')
 
     #DoubleMuon_Run2016.reduceFiles(to=1)
 
     ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
-    r = run([DoubleMuon_Run2016], sel, JR, outfile="results/tune_DoubleMuon_test", maxN=1e6)
+    r = run([DY_LO_16], sel, JR, outfile="results/tune_Summer16_small", maxN=1e4)
 
     LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 

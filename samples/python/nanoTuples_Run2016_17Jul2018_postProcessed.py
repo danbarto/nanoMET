@@ -18,7 +18,7 @@ logger.info("Loading data samples from directory %s", os.path.join(data_director
 
 dirs = {}
 for (r, version) in [('B','_ver2'),('C',''),('D',''),('E',''),('F',''),('G',''),('H','')]: # no event that passes json in B_ver1
-    runTag = 'Run2016' + r + '_26Sep2018' + version
+    runTag = 'Run2016' + r + '_17Jul2018' + version
     dirs["DoubleMuon_Run2016"       + r + version ] = ["DoubleMuon_"        + runTag ]
 
 def merge(pd, totalRunName, listOfRuns):

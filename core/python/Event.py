@@ -20,20 +20,8 @@ class Event:
         jetResolution.getJER(event)
 
         self.nJet       = event.nJet
-        # use the cleanmask from nanoAOD to clean against leptons, but don't use jetId as of now
-        # additionally, clean against photons. Create a list of jet indices that are cleaned from leptons and photons
-        #cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if (x>0 and event.Jet_jetId[i]>=3) ]
-        cleanmaskLep    = [ event.Jet_cleanmask[i] for i in range(self.nJet) ]
-        cleanmaskPhot   = [ i==1 for i in event.Jet_cleanmaskPhoton if i>=0 ]
-        cleanJetIndices = []
-        if not len(cleanmaskLep) == len(cleanmaskPhot):
-            raise ValueError
-        else:
-            for i in range(len(cleanmaskLep)):
-                if cleanmaskLep[i] and cleanmaskPhot[i]:
-                    cleanJetIndices.append(i)
-
-        #cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmask) if x>0 ]
+        # The preliminary conclusion on jet/lepton cleaning is: use simple deltaR cleaning of jets against electrons/muons/photons
+        cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmaskMETSig) if x>0 ]
         
         self.Jet_pt     = [ event.Jet_pt[i]     for i in cleanJetIndices ]
         self.Jet_eta    = [ event.Jet_eta[i]    for i in cleanJetIndices ]

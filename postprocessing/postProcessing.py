@@ -11,7 +11,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel       import C
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import Module
 
 # Import modules
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
@@ -27,7 +27,7 @@ argParser.add_argument('--job',         action='store', type=int, default=0, hel
 argParser.add_argument('--nJobs',       action='store', nargs='?', type=int,default=1, help="Maximum number of simultaneous jobs.")
 argParser.add_argument('--prepare',     action='store_true', help="Prepare, don't acutally run" )
 argParser.add_argument('--year',        action='store', default=None, help="Which year? Important for json file.")
-argParser.add_argument('--era',         action='store', default="2016_v1", help="Which era/subdirectory?")
+argParser.add_argument('--era',         action='store', default="v1", help="Which era/subdirectory?")
 options = argParser.parse_args()
 
 import nanoMET.tools.logger as _logger
@@ -37,13 +37,21 @@ logger = _logger.get_logger(options.logLevel, logFile = None)
 from RootTools.core.standard            import *
 
 # Import samples
+year = int(options.year)
 
-#from Samples.nanoAOD.Summer16 import allSamples as Summer16
-from Samples.nanoAOD.Summer16_private_legacy_v1 import allSamples as Summer16_METSig_v1
-from Samples.nanoAOD.Run2018_26Sep2018_private import allSamples as Run2018_26Sep2018_private
-from Samples.nanoAOD.Run2016_17Jul2018_private import allSamples as Run2016_17Jul2018_private
-
-allSamples = Summer16_METSig_v1 + Run2018_26Sep2018_private + Run2016_17Jul2018_private
+allSamples = []
+if year == 2016:
+    from Samples.nanoAOD.Summer16_private_legacy_v1 import allSamples as Summer16_private_legacy_v1
+    from Samples.nanoAOD.Run2016_17Jul2018_private import allSamples as Run2016_17Jul2018_private
+    allSamples = Summer16_private_legacy_v1 + Run2016_17Jul2018_private
+elif year == 2017:
+    from Samples.nanoAOD.Fall17_private_legacy_v1 import allSamples as Fall17_private_legacy_v1
+    from Samples.nanoAOD.Run2017_31Mar2018_private import allSamples as Run2017_31Mar2018_private
+    allSamples = Fall17_private_legacy_v1 + Run2017_31Mar2018_private
+elif year == 2018:
+    from Samples.nanoAOD.Autumn18_private_legacy_v1 import allSamples as Autumn18_private_legacy_v1
+    from Samples.nanoAOD.Run2018_17Sep2018_private import allSamples as Run2018_17Sep2018_private
+    allSamples = Autumn18_private_legacy_v1 + Run2018_17Sep2018_private
 
 print "Searching for sample %s"%options.samples[0]  
 
@@ -56,7 +64,6 @@ for selectedSample in options.samples:
             logger.info("Sample has normalization %s", sample.normalization)
             sample.normalization = float(sample.normalization)
 
-year = int(options.year) # Not needed atm, but might be needed again at some point
 
 if len(samples)==0:
     logger.info( "No samples found. Was looking for %s. Exiting" % options.samples )
@@ -115,10 +122,15 @@ logger.info("Using selection: %s", cut)
 
 # Main part
 
-directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/%s/"%options.era
+directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/%s_%s/"%(options.year, options.era)
 output_directory = os.path.join( directory, options.skim, sample.name )
 
 logger.info("Loading modules.")
+
+if year == 2016:
+    puwProducer = puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
+else:
+    puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
 
 if sample.isData:
     modules = [
@@ -131,7 +143,7 @@ if sample.isData:
 
 else:
     modules = [
-        puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False),
+        puwProducer,
         lumiWeightProducer(lumiScaleFactor),
         METSigTools(),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
