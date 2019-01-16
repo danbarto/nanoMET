@@ -11,7 +11,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel       import C
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import Module
 
 # Import modules
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017, pufile_data2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
@@ -129,8 +129,11 @@ logger.info("Loading modules.")
 
 if year == 2016:
     puwProducer = puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
-else:
+elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
+elif year == 2018:
+    puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
+
 
 if sample.isData:
     modules = [

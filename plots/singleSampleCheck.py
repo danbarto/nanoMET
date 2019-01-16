@@ -34,8 +34,8 @@ dirs['WJetsToLNu']      = ["WJetsToLNu_ext"]
 dirs['TTZToQQ']         = ['TTZToQQ'] 
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 
-WJetsToLNu  = Sample.fromDirectory(name="WJets", treeName="Events", isData=False, color=color.WJets, texName="W+Jets", directory=directories['WJetsToLNu'])
-TTZToQQ     = Sample.fromDirectory(name="TTZToQQ", treeName="Events", isData=False, color=color.TTZ, texName="t#bar{t}Z, had", directory=directories['TTZToQQ'])
+WJetsToLNu_16  = Sample.fromDirectory(name="WJets", treeName="Events", isData=False, color=color.WJets, texName="W+Jets", directory=directories['WJetsToLNu'])
+TTZToQQ_16     = Sample.fromDirectory(name="TTZToQQ", treeName="Events", isData=False, color=color.TTZ, texName="t#bar{t}Z, had", directory=directories['TTZToQQ'])
 
 data_directory              = "/afs/hephy.at/data/dspitzbart03/nanoSamples/"
 postProcessing_directory    = "2016_v6/dimuon/"
@@ -43,10 +43,18 @@ dirs = {}
 dirs['DYJetsToLL']          = ["DYJetsToLL_M50_LO_ext1"]
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 
-DYJetsToLL  = Sample.fromDirectory(name="DYJets", treeName="Events", isData=False, color=color.DY, texName="DY", directory=directories['DYJetsToLL'])
+DYJetsToLL_16  = Sample.fromDirectory(name="DYJets_16", treeName="Events", isData=False, color=color.DY, texName="DY", directory=directories['DYJetsToLL'])
 
 
-sample1 = DYJetsToLL
+data_directory              = "/afs/hephy.at/data/dspitzbart03/nanoSamples/"
+postProcessing_directory    = "2017_v6/dimuon/"
+dirs = {}
+dirs['DYJetsToLL']          = ["DYJetsToLL_M50_LO"]
+directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
+
+DYJetsToLL_17  = Sample.fromDirectory(name="DYJets_17", treeName="Events", isData=False, color=color.DY, texName="DY", directory=directories['DYJetsToLL'])
+
+sample1 = DYJetsToLL_17
 
 selection = "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0 && Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0 && abs(dl_mass-91.2)<10 && GenMET_pt<10"
 #selection = "nElectron==0 && nMuon==0 && GenMET_pt<10"
@@ -59,14 +67,23 @@ sequence = []
 
 from nanoMET.core.JetResolution import *
 from nanoMET.core.Event         import Event
-JERData = JetResolution('Summer16_25nsV1_DATA')
-JERMC   = JetResolution('Summer16_25nsV1_MC')
 #JERData = JetResolution('Spring16_25nsV6_DATA')
 #JERMC   = JetResolution('Spring16_25nsV6_MC')
 #paramsData  = [1.38, 1.27, 1.22, 1.16, 1.10, 0.0, 0.58]
 #paramsMC    = [1.39, 1.26, 1.21, 1.23, 1.28, -0.26, 0.62]
-paramsData  = [1.26, 1.14, 1.13, 1.13, 1.06, -3.3, 0.59]
+
+# 2016 tuning v3
+JERData     = JetResolution('Summer16_25nsV1_DATA')
+JERMC       = JetResolution('Summer16_25nsV1_MC')
+paramsData  = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
 paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+
+# 2017 tuning v3
+JERData     = JetResolution('Fall17_25nsV1_DATA')
+JERMC       = JetResolution('Fall17_25nsV1_MC')
+paramsData  = []
+paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
+
 
 def calcMETSig( event, sample ):
     if sample.isData:
