@@ -195,8 +195,14 @@ for index, mode in enumerate(allModes):
 
   plots.append(Plot(
     name = 'yield', texX = 'yield', texY = 'Number of Events',
-    attribute = lambda event, sample: 0.5 + index,
+    attribute = lambda event, sample: 0.5 + index, # yields are somehow acting weird
     binning=[1, 0, 1],
+  ))
+
+  plots.append(Plot(
+    name = 'yield_BU', texX = 'yield', texY = 'Number of Events',
+    attribute = lambda event, sample: event.MET_pt/event.MET_pt, # yields are somehow acting weird
+    binning=[1, 0, 2],
   ))
 
   plots.append(Plot(
