@@ -13,6 +13,7 @@ from RootTools.core.standard            import *
 from nanoMET.tools.user                 import plot_directory
 from nanoMET.samples.color              import color
 from nanoMET.tools.puReweighting        import getReweightingFunction
+from nanoMET.tools.cutInterpreter       import cutInterpreter
 from Samples.Tools.metFilters           import getFilterCut
 #from nanoMET.tools.cutInterpreter  import cutInterpreter
 
@@ -26,8 +27,9 @@ argParser.add_argument('--noData',              action='store_true', default=Fal
 argParser.add_argument('--small',               action='store_true',     help='Run only on a small subset of the data?', )
 argParser.add_argument('--plot_directory',      action='store',      default='v1')
 argParser.add_argument('--year',                action='store',      default=2016)
-argParser.add_argument('--selection',           action='store',      default='relIso0.12-looseLeptonVeto-mll20-onZ')
+argParser.add_argument('--selection',           action='store',      default='njet1p-looseLeptonVeto-onZ')
 args = argParser.parse_args()
+
 
 
 year = int(args.year)
@@ -82,7 +84,12 @@ elif year == 2018:
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc = [DY_LO_18, Top_18]#, VVTo2L2Nu_18, WJets_18]
+    triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
+    JERData     = JetResolution('Fall17_25nsV1_DATA')
+    JERMC       = JetResolution('Fall17_25nsV1_MC')
+    paramsData  = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
+    paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
 #
 # Text on the plots
 #
@@ -140,7 +147,7 @@ def calcMETSig( event, sample ):
 sequence += [ calcMETSig ]
 
 def getLeptonSelection( mode ):
-  if   mode=="mumu": return "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0"
+  if   mode=="mumu": return "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2"
 
 nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc="Summer16")
 nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc="Summer16")
@@ -160,6 +167,7 @@ for index, mode in enumerate(allModes):
     # maybe add singleMu backup
     print data_selectionString
     data_sample.setSelectionString([data_selectionString])
+    data_sample.scale = 1
   if   mode=="mumu": data_sample.texName = "data (2 #mu)"
 
   data_sample.name           = "data"
@@ -186,10 +194,13 @@ for index, mode in enumerate(allModes):
 
   if args.small:
         for sample in stack.samples:
-            sample.reduceFiles( to = 3 )
+            sample.normalization=1.
+            sample.reduceFiles( factor=40 )
+            sample.scale /= sample.normalization
+            #sample.reduceFiles( to = 3 )
 
   # Use some defaults
-  Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0 && abs(dl_mass-91.2)<10", addOverFlowBin='upper')
+  Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = cutInterpreter.cutString(args.selection), addOverFlowBin='upper')
   
   plots = []
 
@@ -222,6 +233,21 @@ for index, mode in enumerate(allModes):
       attribute = TreeVariable.fromString( "MET_phi/F" ),
       binning=[10,-pi,pi],
   ))
+
+  if year == 2017:
+    #METFixEE2017_pt
+    
+    plots.append(Plot(
+        texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
+        attribute = TreeVariable.fromString( "METFixEE2017_pt/F" ),
+        binning=[400/20,0,400],
+    ))
+
+    plots.append(Plot(
+        texX = '#phi(E_{T}^{miss})', texY = 'Number of Events / 20 GeV',
+        attribute = TreeVariable.fromString( "METFixEE2017_phi/F" ),
+        binning=[10,-pi,pi],
+    ))
 
   # removed from nanoAOD
   #plots.append(Plot(
