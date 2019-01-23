@@ -172,23 +172,30 @@ def getMET_neEmEBalace( event, sample ):
         #print sumEt
 
         # do the cool stuff
-        if 2.5<abs(event.Jet_eta[i])<3.0 and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
+        if 2.5<abs(event.Jet_eta[i])<3.0:# and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
             Jet_x = event.Jet_pt[i] * math.cos(event.Jet_phi[i])
             Jet_y = event.Jet_pt[i] * math.sin(event.Jet_phi[i])
             if event.Jet_neEmEF[i] > 0:
                 alpha_j = 1 - (MET_x*Jet_x + MET_y*Jet_y)/(event.Jet_neEmEF[i]*(Jet_x**2 + Jet_y**2))
             else:
                 alpha_j = 1
-                alpha_j = max(min(alpha_j,1),0)
+            #print alpha_j
+            alpha_j = max(min(alpha_j,1),0)
             
-
+            Jet_pt_min = math.sqrt((Jet_x*event.Jet_neEmEF[i]*alpha_j)**2 + (Jet_y*event.Jet_neEmEF[i]*alpha_j)**2)
             MET_min_j = math.sqrt((MET_x + (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y + (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
-            MET_min.append((alpha_j, MET_min_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i]))
+            MET_min.append((alpha_j, MET_min_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
     
     event.Jet_pt_EE = -99
     event.Jet_eta_EE = -99
     event.Jet_phi_EE = -99
+    event.Jet_pt_EE_corr = -99
+
+    if len(MET_min)>0:
+        MET_min_t = min(MET_min, key = lambda t: t[1])
+
     if len(MET_min) == 0:
+        # fill with defaults
         event.MET_min_MET40     = event.MET_pt
         event.alpha_MET40       = 1
         event.MET_min           = event.MET_pt
@@ -196,16 +203,21 @@ def getMET_neEmEBalace( event, sample ):
     elif event.MET_pt < 40:
         event.MET_min_MET40     = event.MET_pt
         event.alpha_MET40       = 1
-        event.MET_min           = min(MET_min, key = lambda t: t[1])[1]
-        event.alpha             = min(MET_min, key = lambda t: t[1])[0]
+        event.MET_min           = MET_min_t[1]
+        event.alpha             = MET_min_t[0]
+        event.Jet_pt_EE         = MET_min_t[2]
+        event.Jet_phi_EE        = MET_min_t[3]
+        event.Jet_eta_EE        = MET_min_t[4]
+        event.Jet_pt_EE_corr    = MET_min_t[5]
     else:
-        event.MET_min_MET40     = min(MET_min, key = lambda t: t[1])[1]
-        event.alpha_MET40       = min(MET_min, key = lambda t: t[1])[0]
-        event.MET_min           = min(MET_min, key = lambda t: t[1])[1]
-        event.alpha             = min(MET_min, key = lambda t: t[1])[0]
-        event.Jet_pt_EE         = min(MET_min, key = lambda t: t[1])[2]
-        event.Jet_phi_EE        = min(MET_min, key = lambda t: t[1])[3]
-        event.Jet_eta_EE        = min(MET_min, key = lambda t: t[1])[4]
+        event.MET_min_MET40     = MET_min_t[1]
+        event.alpha_MET40       = MET_min_t[0]
+        event.MET_min           = MET_min_t[1]
+        event.alpha             = MET_min_t[0]
+        event.Jet_pt_EE         = MET_min_t[2]
+        event.Jet_phi_EE        = MET_min_t[3]
+        event.Jet_eta_EE        = MET_min_t[4]
+        event.Jet_pt_EE_corr    = MET_min_t[5]
         #print MET_min, event.MET_pt
 
     event.MET_min_ratio = abs(event.MET_min/event.MET_pt - 1)
@@ -372,6 +384,13 @@ for index, mode in enumerate(allModes):
   ))
 
   plots.append(Plot(
+      texX = 'p_{T}(mis. Jet, corr.) (GeV)', texY = 'Number of Events',
+      name = "Jet_pt_EE_corr",
+      attribute = lambda event, sample: event.Jet_pt_EE_corr,
+      binning=[50,0,200],
+  ))
+
+  plots.append(Plot(
       texX = '#phi (mis. Jet)', texY = 'Number of Events',
       name = "Jet_phi_EE",
       attribute = lambda event, sample: event.Jet_phi_EE,
@@ -501,13 +520,11 @@ for index, mode in enumerate(allModes):
     attribute = lambda event, sample: event.Muon_pt[1],
     binning=[28,20,300],
   ))
-  plotting.fill(plots, read_variables = read_variables, sequence = sequence)
 
 
   ### 2D Data plots ###
-  plots2D_data = []
-
-  plots2D_data.append(Plot2D(
+  plots2D = []
+  plots2D.append(Plot2D(
     stack = stackData,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Data_METvsMETmin",
@@ -515,7 +532,7 @@ for index, mode in enumerate(allModes):
     binning = [40,0,200, 40, 0, 200]
   ))
 
-  plots2D_data.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackData,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
@@ -523,7 +540,7 @@ for index, mode in enumerate(allModes):
     binning = [20,2.5,3.0, 32, -3.2, 3.2]
   ))
 
-  plots2D_data.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackData,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
@@ -532,9 +549,7 @@ for index, mode in enumerate(allModes):
   ))
   
   ### 2D DY plots ###
-  plots2D_dy = []
-
-  plots2D_dy.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackDY,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "DY_METvsMETmin",
@@ -542,7 +557,7 @@ for index, mode in enumerate(allModes):
     binning = [40,0,200, 40, 0, 200]
   ))
 
-  plots2D_dy.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackDY,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
@@ -550,7 +565,7 @@ for index, mode in enumerate(allModes):
     binning = [20,2.5,3.0, 32, -3.2, 3.2]
   ))
 
-  plots2D_dy.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackDY,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
@@ -559,9 +574,7 @@ for index, mode in enumerate(allModes):
   ))
 
   ### 2D DY plots ###
-  plots2D_top = []
-
-  plots2D_top.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackTT,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Top_METvsMETmin",
@@ -569,7 +582,7 @@ for index, mode in enumerate(allModes):
     binning = [40,0,200, 40, 0, 200]
   ))
 
-  plots2D_top.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackTT,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
@@ -577,7 +590,7 @@ for index, mode in enumerate(allModes):
     binning = [20,2.5,3.0, 32, -3.2, 3.2]
   ))
 
-  plots2D_top.append(Plot2D(
+  plots2D.append(Plot2D(
     stack = stackTT,
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
@@ -585,9 +598,7 @@ for index, mode in enumerate(allModes):
     binning = [20,-3.0,-2.5, 32, -3.2, 3.2]
   ))
 
-  plotting.fill(plots2D_data, read_variables = read_variables, sequence = sequence)
-  plotting.fill(plots2D_dy, read_variables = read_variables, sequence = sequence)
-  plotting.fill(plots2D_top, read_variables = read_variables, sequence = sequence)
+  plotting.fill( plots+plots2D, read_variables = read_variables, sequence = sequence)
 
 
   # Get normalization yields from yield histogram
@@ -605,7 +616,7 @@ for index, mode in enumerate(allModes):
   drawPlots(plots, mode, dataMCScale)
   allPlots[mode] = plots
 
-  for plot in plots2D_data + plots2D_dy + plots2D_top:
+  for plot in plots2D:
     for log in [True, False]:
         plotting.draw2D(
             plot = plot,
