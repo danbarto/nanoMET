@@ -156,11 +156,18 @@ def calcMETSig( event, sample ):
 def getMET_neEmEBalace( event, sample ):
     Jet_dPhiJetMET = []
     MET_min = []
+    MET_minX = []
+    MET_min_pseudoJet = []
     sumEt = 0
     badJet_Energy = 0
 
     MET_x = event.MET_pt * math.cos(event.MET_phi)
     MET_y = event.MET_pt * math.sin(event.MET_phi)
+    
+    pseudoJet_x = 0.
+    pseudoJet_y = 0.
+    pseudoJet_neEmEF = 0.
+    pseudoJet_sumPt  = 0.
 
     for i in range(event.nJet):
         dPhiJetMET = deltaPhi(event.Jet_phi[i], event.MET_phi)
@@ -173,37 +180,67 @@ def getMET_neEmEBalace( event, sample ):
 
         # do the cool stuff
         if 2.5<abs(event.Jet_eta[i])<3.0:# and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
+            pseudoJet_sumPt += event.Jet_pt[i]
+            pseudoJet_neEmEF += event.Jet_neEmEF[i]*event.Jet_pt[i]
+
             Jet_x = event.Jet_pt[i] * math.cos(event.Jet_phi[i])
             Jet_y = event.Jet_pt[i] * math.sin(event.Jet_phi[i])
+
+            pseudoJet_x += Jet_x
+            pseudoJet_y += Jet_y
+
             if event.Jet_neEmEF[i] > 0:
-                alpha_j = 1 - (MET_x*Jet_x + MET_y*Jet_y)/(event.Jet_neEmEF[i]*(Jet_x**2 + Jet_y**2))
+                alpha_j = 1 + (MET_x*Jet_x + MET_y*Jet_y)/(event.Jet_neEmEF[i]*(Jet_x**2 + Jet_y**2))
+                alphaX_j = 1 + (MET_x*Jet_x + MET_y*Jet_y)/((Jet_x**2 + Jet_y**2))
             else:
                 alpha_j = 1
+                alphaX_j = 1
             #print alpha_j
             alpha_j = max(min(alpha_j,1),0)
+            alphaX_j = max(min(alphaX_j,1),0)
             
             Jet_pt_min = math.sqrt((Jet_x*event.Jet_neEmEF[i]*alpha_j)**2 + (Jet_y*event.Jet_neEmEF[i]*alpha_j)**2)
-            MET_min_j = math.sqrt((MET_x + (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y + (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
+            MET_min_j = math.sqrt((MET_x - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
+            MET_minX_j = math.sqrt((MET_x - (alphaX_j-1) * Jet_x)**2 + (MET_y - (alphaX_j-1) * Jet_y)**2)
             MET_min.append((alpha_j, MET_min_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
+            MET_minX.append((alphaX_j, MET_minX_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
     
-    event.Jet_pt_EE = -99
-    event.Jet_eta_EE = -99
-    event.Jet_phi_EE = -99
+    # calculate alpha for pseudo jet
+    if pseudoJet_neEmEF>0:
+        pseudoJet_neEmEF = pseudoJet_neEmEF/pseudoJet_sumPt
+        alpha_j = 1 + (MET_x*pseudoJet_x + MET_y*pseudoJet_y) / (pseudoJet_neEmEF * (pseudoJet_x**2 + pseudoJet_y**2))
+        alpha_j = max(min(alpha_j,1),0)
+        MET_min_j = math.sqrt((MET_x - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_x)**2 + (MET_y - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_y)**2)
+        MET_min_pseudoJet = MET_min + [(alpha_j, MET_min_j, -99, -99, -99, -99)]
+    else:
+        MET_min_pseudoJet = MET_min
+
+    event.Jet_pt_EE     = -99
+    event.Jet_eta_EE    = -99
+    event.Jet_phi_EE    = -99
     event.Jet_pt_EE_corr = -99
+
+    #print len(MET_min)
 
     if len(MET_min)>0:
         MET_min_t = min(MET_min, key = lambda t: t[1])
+        MET_minX_t = min(MET_minX, key = lambda t: t[1])
+        MET_min_pseudoJet_t = min(MET_min_pseudoJet, key = lambda t: t[1])
 
     if len(MET_min) == 0:
         # fill with defaults
         event.MET_min_MET40     = event.MET_pt
         event.alpha_MET40       = 1
         event.MET_min           = event.MET_pt
+        event.MET_minX          = event.MET_pt
+        event.MET_min_pseudoJet = event.MET_pt
         event.alpha             = 1
     elif event.MET_pt < 40:
         event.MET_min_MET40     = event.MET_pt
         event.alpha_MET40       = 1
         event.MET_min           = MET_min_t[1]
+        event.MET_minX          = MET_minX_t[1]
+        event.MET_min_pseudoJet = MET_min_pseudoJet_t[1]
         event.alpha             = MET_min_t[0]
         event.Jet_pt_EE         = MET_min_t[2]
         event.Jet_phi_EE        = MET_min_t[3]
@@ -213,6 +250,8 @@ def getMET_neEmEBalace( event, sample ):
         event.MET_min_MET40     = MET_min_t[1]
         event.alpha_MET40       = MET_min_t[0]
         event.MET_min           = MET_min_t[1]
+        event.MET_minX          = MET_minX_t[1]
+        event.MET_min_pseudoJet = MET_min_pseudoJet_t[1]
         event.alpha             = MET_min_t[0]
         event.Jet_pt_EE         = MET_min_t[2]
         event.Jet_phi_EE        = MET_min_t[3]
@@ -338,6 +377,20 @@ for index, mode in enumerate(allModes):
       texX = 'E_{T}^{miss} min.', texY = 'Number of Events',
       name = "MET_min",
       attribute = lambda event, sample: event.MET_min,
+      binning=[400/20,0,400],
+  ))
+
+  plots.append(Plot(
+      texX = 'E_{T}^{miss} min. pseudo jet', texY = 'Number of Events',
+      name = "MET_min_pseudoJet",
+      attribute = lambda event, sample: event.MET_min_pseudoJet,
+      binning=[400/20,0,400],
+  ))
+
+  plots.append(Plot(
+      texX = 'E_{T}^{miss} min. all jet', texY = 'Number of Events',
+      name = "MET_minX",
+      attribute = lambda event, sample: event.MET_minX,
       binning=[400/20,0,400],
   ))
 
@@ -528,7 +581,7 @@ for index, mode in enumerate(allModes):
     stack = stackData,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Data_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_MET40 ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
     binning = [40,0,200, 40, 0, 200]
   ))
 
@@ -553,7 +606,7 @@ for index, mode in enumerate(allModes):
     stack = stackDY,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "DY_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_MET40 ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
     binning = [40,0,200, 40, 0, 200]
   ))
 
@@ -578,7 +631,7 @@ for index, mode in enumerate(allModes):
     stack = stackTT,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Top_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_MET40 ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
     binning = [40,0,200, 40, 0, 200]
   ))
 

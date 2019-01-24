@@ -22,8 +22,8 @@ special_cuts = {
 
   }
 
-continous_variables = [ ("met", "MET_pt") ]
-discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)")]
+continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood") ]
+discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
