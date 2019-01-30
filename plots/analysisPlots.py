@@ -169,6 +169,9 @@ def getMET_neEmEBalace( event, sample ):
     pseudoJet_neEmEF = 0.
     pseudoJet_sumPt  = 0.
 
+    EE_jets = []
+
+    #print "Next event"
     for i in range(event.nJet):
         dPhiJetMET = deltaPhi(event.Jet_phi[i], event.MET_phi)
         #print event.Jet_phi[i], event.MET_phi, event.Jet_pt[i], event.Jet_neEmEF[i], dPhiJetMET
@@ -179,7 +182,8 @@ def getMET_neEmEBalace( event, sample ):
         #print sumEt
 
         # do the cool stuff
-        if 2.5<abs(event.Jet_eta[i])<3.0:# and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
+        if 2.65<abs(event.Jet_eta[i])<3.14:# and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
+            EE_jets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i]})
             pseudoJet_sumPt += event.Jet_pt[i]
             pseudoJet_neEmEF += event.Jet_neEmEF[i]*event.Jet_pt[i]
 
@@ -201,20 +205,48 @@ def getMET_neEmEBalace( event, sample ):
             
             Jet_pt_min = math.sqrt((Jet_x*event.Jet_neEmEF[i]*alpha_j)**2 + (Jet_y*event.Jet_neEmEF[i]*alpha_j)**2)
             MET_min_j = math.sqrt((MET_x - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
+            #print MET_min_j
             MET_minX_j = math.sqrt((MET_x - (alphaX_j-1) * Jet_x)**2 + (MET_y - (alphaX_j-1) * Jet_y)**2)
             MET_min.append((alpha_j, MET_min_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
             MET_minX.append((alphaX_j, MET_minX_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
     
-    # calculate alpha for pseudo jet
-    if pseudoJet_neEmEF>0:
-        pseudoJet_neEmEF = pseudoJet_neEmEF/pseudoJet_sumPt
-        alpha_j = 1 + (MET_x*pseudoJet_x + MET_y*pseudoJet_y) / (pseudoJet_neEmEF * (pseudoJet_x**2 + pseudoJet_y**2))
-        alpha_j = max(min(alpha_j,1),0)
-        MET_min_j = math.sqrt((MET_x - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_x)**2 + (MET_y - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_y)**2)
-        MET_min_pseudoJet = MET_min + [(alpha_j, MET_min_j, -99, -99, -99, -99)]
-    else:
-        MET_min_pseudoJet = MET_min
+    # get all combinations of pseudo-jets
+    nEE_jets = len(EE_jets)
+    MET_min_pseudoJet = copy.deepcopy(MET_min)
+    nEE_jets = min(nEE_jets, 6)
+    for i in range(2,nEE_jets+1):
+        #print "Now pseudo-jets"
+        combinations = itertools.combinations(EE_jets, i)
+        for comb in combinations:
+            pseudoJet_x = 0.
+            pseudoJet_y = 0.
+            pseudoJet_neEmEF = 0.
+            pseudoJet_sumPt  = 0.
 
+            for jet in comb:
+                Jet_x = jet['pt'] * math.cos(jet['phi'])
+                Jet_y = jet['pt'] * math.sin(jet['phi'])
+
+                pseudoJet_x += Jet_x
+                pseudoJet_y += Jet_y
+
+                pseudoJet_sumPt     += jet['pt']
+                pseudoJet_neEmEF    += jet['neEmEF'] * jet['pt']
+
+            
+            if pseudoJet_neEmEF>0:
+                pseudoJet_neEmEF = pseudoJet_neEmEF/pseudoJet_sumPt
+                alpha_j = 1 + (MET_x*pseudoJet_x + MET_y*pseudoJet_y)/(pseudoJet_neEmEF*(pseudoJet_x**2 + pseudoJet_y**2))
+            else:
+                alpha_j = 1
+            alpha_j = max(min(alpha_j,1),0)
+            MET_min_j = math.sqrt((MET_x - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_x)**2 + (MET_y - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_y)**2)
+            MET_min_pseudoJet.append((alpha_j, MET_min_j, -99, -99, -99, -99))
+            #print MET_min_j
+    
+    event.nJet_EE = len(MET_min)
+    event.nJet_pseudoJets = len(MET_min_pseudoJet)
+                   
     event.Jet_pt_EE     = -99
     event.Jet_eta_EE    = -99
     event.Jet_phi_EE    = -99
@@ -315,7 +347,7 @@ for index, mode in enumerate(allModes):
 
   for sample in mc:
     sample.scale          = lumi_scale
-    sample.read_variables = ['puWeight/F','Pileup_nTrueInt/F']
+    sample.read_variables = ['puWeight/F','puWeightUp/F', 'Pileup_nTrueInt/F']
     #sample.weight         = lambda event, sample: event.puWeight*nTrueInt36fb_puRW(event.Pileup_nTrueInt)
     sample.weight         = lambda event, sample: event.puWeight
     sample.setSelectionString([getFilterCut(isData=False, year=year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
@@ -574,6 +606,19 @@ for index, mode in enumerate(allModes):
     binning=[28,20,300],
   ))
 
+  plots.append(Plot(
+    texX = 'N_{j} (EE)', texY = 'Number of Events',
+    name = 'nJet_EE',
+    attribute = lambda event, sample: event.nJet_EE,
+    binning=[15,-0.5,14.5],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (EE, pseud-jets)', texY = 'Number of Events',
+    name = 'nJet_pseudoJets',
+    attribute = lambda event, sample: event.nJet_pseudoJets,
+    binning=[20,0,500],
+  ))
 
   ### 2D Data plots ###
   plots2D = []

@@ -13,7 +13,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import M
 # Import modules
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017, pufile_data2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
+from PhysicsTools.NanoAODTools.postprocessing.modules.private.METminProducer        import METminProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.applyJSON             import applyJSON
 
@@ -131,6 +133,7 @@ if year == 2016:
     puwProducer = puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
 elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
+    jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
 
@@ -140,7 +143,8 @@ if sample.isData:
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
-        applyJSON(json)
+        applyJSON(json),
+        METminProducer(isData=True),
         # MET significance producer
     ]
 
@@ -150,7 +154,9 @@ else:
         lumiWeightProducer(lumiScaleFactor),
         METSigTools(),
         #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
-        applyJSON(None)
+        applyJSON(None),
+        jetmetProducer,
+        METminProducer(isData=False, calcVariations=True),
         # MET significance producer
     ]
 
