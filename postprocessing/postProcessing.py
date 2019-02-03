@@ -101,6 +101,7 @@ json = sample.json # pickup json from sample, as defined in the Sample repositor
 sample = sample.split( n=options.nJobs, nSub=options.job)
 
 logger.info("Will run over %s files", len(sample.files))
+logger.info("Running over files %s", sample.files)
 
 # Put together skim
 isDiMuon        = options.skim.lower().startswith('dimuon')
@@ -118,6 +119,9 @@ elif isTriLep:
 elif isSingleLep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=1" )
 
+if options.skim.lower().count('met'):
+    skimConds.append( "MET_pt>100" )
+
 cut = '&&'.join(skimConds)
 
 logger.info("Using selection: %s", cut)
@@ -131,18 +135,47 @@ logger.info("Loading modules.")
 
 if year == 2016:
     puwProducer = puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
+    metSigParamsMC      = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+    metSigParamsData    = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
+    JER                 = "Summer16_25nsV1_MC"          if not sample.isData else "Summer16_25nsV1_DATA"
+    JERera              = "Fall17_V3"
+    if sample.isData:
+        if sample.name.count("Run2016B") or sample.name.count("Run2016C") or sample.name.count("Run2016D"):
+            JEC         = "Summer16_07Aug2017BCD_V11_DATA"
+        elif sample.name.count("Run2016E") or sample.name.count("Run2016F"):
+            JEC         = "Summer16_07Aug2017EF_V11_DATA"
+        elif sample.name.count("Run2016G") or sample.name.count("Run2016H"):
+            JEC         = "Summer16_07Aug2017GH_V11_DATA"
+        else:
+            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
+    else:
+        JEC             = "Summer16_07Aug2017_V11_MC"
+
 elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
+    metSigParamsMC      = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
+    metSigParamsData    = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
+    JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
+    JERera              = "Fall17_V3"
+    JEC                 = "Fall17_17Nov2017_V32_MC"     if not sample.isData else "Fall17_17Nov2017_V32_DATA"
     jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
+
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
+    metSigParamsMC      = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
+    metSigParamsData    = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
+    JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
+    JERera              = "Fall17_V3"
+    JEC                 = "Fall17_17Nov2017_V32_MC"     if not sample.isData else "Fall17_17Nov2017_V32_DATA"
+    jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
 
 
+metSigParams            = metSigParamsMC                if not sample.isData else metSigParamsData
 if sample.isData:
     modules = [
         METSigTools(),
         lumiWeightProducer(1, isData=True),
-        #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
+        METSigProducer(JER, metSigParams),
         applyJSON(json),
         METminProducer(isData=True),
         # MET significance producer
@@ -153,7 +186,7 @@ else:
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
         METSigTools(),
-        #METSigProducer("Summer16_25nsV1_MC", [1.39,1.26,1.21,1.23,1.28,-0.26,0.62]),
+        METSigProducer(JER, metSigParams),
         applyJSON(None),
         jetmetProducer,
         METminProducer(isData=False, calcVariations=True),

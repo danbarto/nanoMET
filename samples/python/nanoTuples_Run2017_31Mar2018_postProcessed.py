@@ -2,9 +2,9 @@ import copy, os, sys
 from RootTools.core.Sample import Sample 
 import ROOT
 
-# Logging
-import logging
-logger = logging.getLogger(__name__)
+## Logging
+#import logging
+#logger = logging.getLogger(__name__)
 
 # Data directory
 try:    data_directory = sys.modules['__main__'].data_directory
@@ -14,7 +14,7 @@ except: from nanoMET.tools.user import data_directory
 try:    postProcessing_directory = sys.modules['__main__'].postProcessing_directory
 except: postProcessing_directory = '2017_v6/dimuon/'
 
-logger.info("Loading data samples from directory %s", os.path.join(data_directory, postProcessing_directory))
+#logger.info("Loading data samples from directory %s", os.path.join(data_directory, postProcessing_directory))
 
 dirs = {}
 for (r, version) in [('B',''),('C',''),('D',''),('E',''),('F','')]:

@@ -3,9 +3,9 @@ from RootTools.core.Sample import Sample
 import ROOT
 from nanoMET.samples.color import color
 
-# Logging
-import logging
-logger = logging.getLogger(__name__)
+## Logging
+#import logging
+#logger = logging.getLogger(__name__)
 
 # Data directory
 try:
@@ -21,7 +21,7 @@ try:
 except:
   postProcessing_directory = "2017_v6/dimuon/"
 
-logger.info("Loading MC samples from directory %s", os.path.join(data_directory, postProcessing_directory))
+#logger.info("Loading MC samples from directory %s", os.path.join(data_directory, postProcessing_directory))
 
 dirs = {}
 

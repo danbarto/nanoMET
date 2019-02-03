@@ -61,6 +61,7 @@ if year == 2016:
     mc          = [DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16]
     dy          = DY_LO_16
     top         = Top_16
+    vv          = VVTo2L2Nu_16
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
 
     JERData     = JetResolution('Summer16_25nsV1_DATA')
@@ -77,6 +78,7 @@ elif year == 2017:
     mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
     dy          = DY_LO_17
     top         = Top_17
+    vv          = VVTo2L2Nu_17
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
     JERData     = JetResolution('Fall17_25nsV1_DATA')
@@ -85,14 +87,15 @@ elif year == 2017:
     paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
     
 elif year == 2018:
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v7/dimuon-met/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v7/dimuon-met/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
-    mc          = [DY_LO_18, Top_18]#, VVTo2L2Nu_18, WJets_18]
+    mc          = [DY_LO_18, Top_18, VVTo2L2Nu_18]#, WJets_18]
     dy          = DY_LO_18
     top         = Top_18
+    vv          = VVTo2L2Nu_18
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
     JERData     = JetResolution('Fall17_25nsV1_DATA')
@@ -137,7 +140,11 @@ def drawPlots(plots, mode, dataMCScale):
 #
 # Read variables and sequences
 #
-read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F]", "nJet/I"]
+read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]", "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]", "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"]
+
+#read_variables += ["Electron[pt/F,eta/F,phi/F,pfRelIso03_all/F]", "dl_mass/F", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8/O", "HLT_IsoMu24/O"]
+#read_variables += ["Flag_goodVertices/O","Flag_globalSuperTightHalo2016Filter/O", "Flag_HBHENoiseFilter/O", "Flag_HBHENoiseIsoFilter/O", "Flag_EcalDeadCellTriggerPrimitiveFilter/O", "Flag_BadPFMuonFilter/O", "Flag_BadChargedCandidateFilter/O", "Flag_ecalBadCalibFilter/O", "Flag_eeBadScFilter/O"]
+
 
 sequence = []
 
@@ -302,7 +309,35 @@ def getMET_neEmEBalace( event, sample ):
         event.MET_neEmEBalace = 0
     #print event.MET_neEmEBalace
 
-sequence += [ calcMETSig, getMET_neEmEBalace ]
+def getNJet( event, sample ):
+    allJets = []
+    for i in range(event.nJet):
+        allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmask[i], 'neHEF':event.Jet_neHEF[i]})
+
+    highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5 and j['cleanmask']>0), allJets )
+    highPtJetsNoCleanmask = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5), allJets )
+    event.nJet_good = len(highPtJets)
+    event.nJet_good_noCleanmask = len(highPtJetsNoCleanmask)
+    event.nJet_noLeptons = len( filter( lambda j:j['cleanmask']>0, allJets) )
+    lowPtJets = filter( lambda j: j['pt']<30., allJets)
+    event.nJet_lowPt                = len( lowPtJets )
+    event.nJet_lowPt_eta0to0p8      = len( filter( lambda j:abs(j['eta'])<0.8, lowPtJets) )
+    event.nJet_lowPt_eta0p8to1p3    = len( filter( lambda j:0.8 <= abs(j['eta']) < 1.3, lowPtJets) )
+    event.nJet_lowPt_eta1p3to1p9    = len( filter( lambda j:1.3 <= abs(j['eta']) < 1.9, lowPtJets) )
+    event.nJet_lowPt_eta1p9to2p5    = len( filter( lambda j:1.9 <= abs(j['eta']) < 2.5, lowPtJets) )
+    event.nJet_lowPt_eta2p5to3p1    = len( filter( lambda j:2.5 <= abs(j['eta']) < 3.1, lowPtJets) )
+    event.nJet_lowPt_eta3p1toInf    = len( filter( lambda j:3.1 <= abs(j['eta']), lowPtJets) )
+
+    sumPtneEmEF = 0
+    sumPtneHEF  = 0
+    for jet in filter( lambda j:2.5 <= abs(j['eta']) < 3.1, lowPtJets):
+        sumPtneEmEF += jet['pt']*jet['neEmEF']
+        sumPtneHEF  += jet['pt']*jet['neHEF']
+        
+    event.sumPtneEmEF_lowPt_eta2p5to3p1 = sumPtneEmEF
+    event.sumPtneHEF_lowPt_eta2p5to3p1 = sumPtneHEF
+
+sequence += [ calcMETSig, getMET_neEmEBalace, getNJet ]
 
 def getLeptonSelection( mode ):
   if   mode=="mumu":
@@ -334,7 +369,7 @@ for index, mode in enumerate(allModes):
   if   mode=="mumu": data_sample.texName = "data (2 #mu)"
 
   data_sample.name           = "data"
-  data_sample.read_variables = ["event/I","run/I"]
+  data_sample.read_variables = ["event/I","run/I","jsonPassed/I"]
   data_sample.style          = styles.errorStyle(ROOT.kBlack)
   lumi_scale                 = data_sample.lumi/1000
 
@@ -389,12 +424,18 @@ for index, mode in enumerate(allModes):
   plots.append(Plot(
     name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
     attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
-    binning=[50,0,50],
+    binning=[80,0,80],
   ))
 
   plots.append(Plot(
       texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
       attribute = TreeVariable.fromString( "MET_pt/F" ),
+      binning=[400/20,0,400],
+  ))
+
+  plots.append(Plot(
+      texX = 'E_{T}^{miss} (raw) (GeV)', texY = 'Number of Events / 20 GeV',
+      attribute = TreeVariable.fromString( "RawMET_pt/F" ),
       binning=[400/20,0,400],
   ))
 
@@ -495,6 +536,12 @@ for index, mode in enumerate(allModes):
       binning=[10,-pi,pi],
   ))
 
+  plots.append(Plot(
+      texX = '#phi(E_{T}^{miss}) (raw)', texY = 'Number of Events / 20 GeV',
+      attribute = TreeVariable.fromString( "RawMET_phi/F" ),
+      binning=[10,-pi,pi],
+  ))
+
   if year == 2017:
     #METFixEE2017_pt
     
@@ -518,11 +565,11 @@ for index, mode in enumerate(allModes):
     ))
 
   # removed from nanoAOD
-  #plots.append(Plot(
-  #  texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
-  #  attribute = TreeVariable.fromString('MET_significance/F'),
-  #  binning= [50,0,100],
-  #))
+  plots.append(Plot(
+    texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
+    attribute = TreeVariable.fromString('MET_significance/F'),
+    binning= [50,0,100],
+  ))
 
   plots.append(Plot(
     texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',
@@ -540,7 +587,7 @@ for index, mode in enumerate(allModes):
   plots.append(Plot(
     texX = '#Sigma E_{T} (GeV)', texY = 'Number of Events',
     attribute = TreeVariable.fromString( "MET_sumEt/F" ),
-    binning=[50, 0,2500],
+    binning=[40, 500,4500],
   ))
 
   plots.append(Plot(
@@ -618,6 +665,118 @@ for index, mode in enumerate(allModes):
     name = 'nJet_pseudoJets',
     attribute = lambda event, sample: event.nJet_pseudoJets,
     binning=[20,0,500],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (all jets)', texY = 'Number of Events',
+    name = 'nJet',
+    attribute = lambda event, sample: event.nJet,
+    binning=[40,0,40],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'nJet_lowPt',
+    attribute = lambda event, sample: event.nJet_lowPt,
+    binning=[40,0,40],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, |#eta|<0.8)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta0to0p8',
+    attribute = lambda event, sample: event.nJet_lowPt_eta0to0p8,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 0.8<|#eta|<1.3)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta0p8to1p3',
+    attribute = lambda event, sample: event.nJet_lowPt_eta0p8to1p3,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 1.3<|#eta|<1.9)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta1p3to1p9',
+    attribute = lambda event, sample: event.nJet_lowPt_eta1p3to1p9,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 1.9<|#eta|<2.5)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta1p9to2p5',
+    attribute = lambda event, sample: event.nJet_lowPt_eta1p9to2p5,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.nJet_lowPt_eta2p5to3p1,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 3.1<|#eta|)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta3p1toInf',
+    attribute = lambda event, sample: event.nJet_lowPt_eta3p1toInf,
+    binning=[20,0,20],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4)', texY = 'Number of Events',
+    name = 'nJet_good',
+    attribute = lambda event, sample: event.nJet_good,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4, no cleanmask)', texY = 'Number of Events',
+    name = 'nJet_good_noCleanmask',
+    attribute = lambda event, sample: event.nJet_good_noCleanmask,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{j} (all jets, no leptons)', texY = 'Number of Events',
+    name = 'nJet_noLeptons',
+    attribute = lambda event, sample: event.nJet_noLeptons,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{e}', texY = 'Number of Events',
+    name = 'nElectron',
+    attribute = lambda event, sample: event.nElectron,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{#mu}', texY = 'Number of Events',
+    name = 'nMuon',
+    attribute = lambda event, sample: event.nMuon,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = 'N_{#gamma}', texY = 'Number of Events',
+    name = 'nPhoton',
+    attribute = lambda event, sample: event.nPhoton,
+    binning=[10,0,10],
+  ))
+
+  plots.append(Plot(
+    texX = '#Sigma p_T*neEmEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'sumPtneEmEF_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.sumPtneEmEF_lowPt_eta2p5to3p1,
+    binning=[20,0,100],
+  ))
+
+  plots.append(Plot(
+    texX = '#Sigma p_T*neHEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'sumPtneHEF_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.sumPtneHEF_lowPt_eta2p5to3p1,
+    binning=[20,0,100],
   ))
 
   ### 2D Data plots ###
@@ -698,6 +857,22 @@ for index, mode in enumerate(allModes):
 
   plotting.fill( plots+plots2D, read_variables = read_variables, sequence = sequence)
 
+  ## other 1D plots
+  #print data_sample.selectionString
+  #print dy.selectionString
+  #print lumi_scale
+  for sample in [data_sample, dy, top, vv]:
+    sample.chain.SetBranchStatus("*",1)
+  data_jetEta   = data_sample.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="(1)")
+  dy_jetEta     = dy.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  top_jetEta    = top.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  vv_jetEta     = vv.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  
+  plots1D = []
+  plots1D.append(Plot.fromHisto(
+    name = "Jet_eta", texX="#eta(all jets)", texY="Events",
+    histos = [[dy_jetEta,top_jetEta,vv_jetEta], [data_jetEta]]
+  ))
 
   # Get normalization yields from yield histogram
   for plot in plots:
@@ -723,6 +898,18 @@ for index, mode in enumerate(allModes):
             drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
             copyIndexPHP = True
         )
+
+  for plot in plots1D:
+    for log in [True, False]:
+        plotting.draw(
+            plot = plot,
+            plot_directory = os.path.join(plot_directory, 'analysis_plots', str(year), args.plot_directory, mode + ("_log" if log else ""), args.selection),
+            logX = False, logY = False,
+            ratio={},
+            drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
+            copyIndexPHP = True
+        )
+
 # Add the different channels into SF and all
 if len(allModes) == 3: #just added for slimmedPlots since we only use doubleMu channel
     for mode in ["SF","all"]:
