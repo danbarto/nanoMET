@@ -105,6 +105,7 @@ logger.info("Running over files %s", sample.files)
 
 # Put together skim
 isDiMuon        = options.skim.lower().startswith('dimuon')
+isDiElectron    = options.skim.lower().startswith('dielectron')
 isDiLep         = options.skim.lower().startswith('dilep')
 isTriLep        = options.skim.lower().startswith('trilep')
 isSingleLep     = options.skim.lower().startswith('singlelep')
@@ -112,6 +113,8 @@ isSingleLep     = options.skim.lower().startswith('singlelep')
 skimConds = []
 if isDiMuon:
     skimConds.append( "Sum$(Muon_pt>15&&abs(Muon_eta)<2.5)>=2" )
+elif isDiElectron:
+    skimConds.append( "Sum$(Electron_pt>15&&abs(Electron_eta)<2.5)>=2" )
 elif isDiLep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
 elif isTriLep:

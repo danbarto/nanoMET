@@ -70,9 +70,9 @@ if year == 2016:
     paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
 
 elif year == 2017:
-    postProcessing_directory = "2017_v6/dimuon/"
+    postProcessing_directory = "2017_v8/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v6/dimuon/"
+    postProcessing_directory = "2017_v8/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
@@ -141,6 +141,7 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 #
 read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]", "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]", "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"]
+#read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F]", "nJet/I"]
 
 #read_variables += ["Electron[pt/F,eta/F,phi/F,pfRelIso03_all/F]", "dl_mass/F", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8/O", "HLT_IsoMu24/O"]
 #read_variables += ["Flag_goodVertices/O","Flag_globalSuperTightHalo2016Filter/O", "Flag_HBHENoiseFilter/O", "Flag_HBHENoiseIsoFilter/O", "Flag_EcalDeadCellTriggerPrimitiveFilter/O", "Flag_BadPFMuonFilter/O", "Flag_BadChargedCandidateFilter/O", "Flag_ecalBadCalibFilter/O", "Flag_eeBadScFilter/O"]
@@ -280,7 +281,7 @@ def getMET_neEmEBalace( event, sample ):
         event.MET_min           = MET_min_t[1]
         event.MET_minX          = MET_minX_t[1]
         event.MET_min_pseudoJet = MET_min_pseudoJet_t[1]
-        event.alpha             = MET_min_t[0]
+        event.alpha             = MET_min_pseudoJet_t[0]
         event.Jet_pt_EE         = MET_min_t[2]
         event.Jet_phi_EE        = MET_min_t[3]
         event.Jet_eta_EE        = MET_min_t[4]
@@ -291,7 +292,7 @@ def getMET_neEmEBalace( event, sample ):
         event.MET_min           = MET_min_t[1]
         event.MET_minX          = MET_minX_t[1]
         event.MET_min_pseudoJet = MET_min_pseudoJet_t[1]
-        event.alpha             = MET_min_t[0]
+        event.alpha             = MET_min_pseudoJet_t[0]
         event.Jet_pt_EE         = MET_min_t[2]
         event.Jet_phi_EE        = MET_min_t[3]
         event.Jet_eta_EE        = MET_min_t[4]
@@ -565,11 +566,12 @@ for index, mode in enumerate(allModes):
     ))
 
   # removed from nanoAOD
-  plots.append(Plot(
-    texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
-    attribute = TreeVariable.fromString('MET_significance/F'),
-    binning= [50,0,100],
-  ))
+  if year == 2018:
+    plots.append(Plot(
+      texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
+      attribute = TreeVariable.fromString('MET_significance/F'),
+      binning= [50,0,100],
+    ))
 
   plots.append(Plot(
     texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',
@@ -785,7 +787,7 @@ for index, mode in enumerate(allModes):
     stack = stackData,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Data_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
     binning = [40,0,200, 40, 0, 200]
   ))
 
@@ -810,7 +812,7 @@ for index, mode in enumerate(allModes):
     stack = stackDY,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "DY_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
     binning = [40,0,200, 40, 0, 200]
   ))
 
@@ -835,7 +837,7 @@ for index, mode in enumerate(allModes):
     stack = stackTT,
     texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
     name = "Top_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min ],
+    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
     binning = [40,0,200, 40, 0, 200]
   ))
 
@@ -861,18 +863,18 @@ for index, mode in enumerate(allModes):
   #print data_sample.selectionString
   #print dy.selectionString
   #print lumi_scale
-  for sample in [data_sample, dy, top, vv]:
-    sample.chain.SetBranchStatus("*",1)
-  data_jetEta   = data_sample.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="(1)")
-  dy_jetEta     = dy.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
-  top_jetEta    = top.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
-  vv_jetEta     = vv.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  #for sample in [data_sample, dy, top, vv]:
+  #  sample.chain.SetBranchStatus("*",1)
+  #data_jetEta   = data_sample.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="(1)")
+  #dy_jetEta     = dy.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  #top_jetEta    = top.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
+  #vv_jetEta     = vv.get1DHistoFromDraw("Jet_eta", [50,-5.,5.], selectionString = cutInterpreter.cutString(args.selection), weightString="weight*puWeight*%s"%lumi_scale)
   
   plots1D = []
-  plots1D.append(Plot.fromHisto(
-    name = "Jet_eta", texX="#eta(all jets)", texY="Events",
-    histos = [[dy_jetEta,top_jetEta,vv_jetEta], [data_jetEta]]
-  ))
+  #plots1D.append(Plot.fromHisto(
+  #  name = "Jet_eta", texX="#eta(all jets)", texY="Events",
+  #  histos = [[dy_jetEta,top_jetEta,vv_jetEta], [data_jetEta]]
+  #))
 
   # Get normalization yields from yield histogram
   for plot in plots:
@@ -899,16 +901,16 @@ for index, mode in enumerate(allModes):
             copyIndexPHP = True
         )
 
-  for plot in plots1D:
-    for log in [True, False]:
-        plotting.draw(
-            plot = plot,
-            plot_directory = os.path.join(plot_directory, 'analysis_plots', str(year), args.plot_directory, mode + ("_log" if log else ""), args.selection),
-            logX = False, logY = False,
-            ratio={},
-            drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
-            copyIndexPHP = True
-        )
+  #for plot in plots1D:
+  #  for log in [True, False]:
+  #      plotting.draw(
+  #          plot = plot,
+  #          plot_directory = os.path.join(plot_directory, 'analysis_plots', str(year), args.plot_directory, mode + ("_log" if log else ""), args.selection),
+  #          logX = False, logY = False,
+  #          ratio={},
+  #          drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
+  #          copyIndexPHP = True
+  #      )
 
 # Add the different channels into SF and all
 if len(allModes) == 3: #just added for slimmedPlots since we only use doubleMu channel
