@@ -27,9 +27,9 @@ argParser.add_argument('--logLevel',            action='store',      default='IN
 argParser.add_argument('--noData',              action='store_true', default=False,           help='also plot data?')
 argParser.add_argument('--small',               action='store_true',     help='Run only on a small subset of the data?', )
 argParser.add_argument('--verySmall',               action='store_true',     help='Run only on a small subset of the data?', )
-argParser.add_argument('--plot_directory',      action='store',      default='v1')
+argParser.add_argument('--plot_directory',      action='store',      default='v8_noSigMax')
 argParser.add_argument('--year',                action='store',      default=2016)
-argParser.add_argument('--selection',           action='store',      default='njet1p-looseLeptonVeto-onZ')
+argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ')
 args = argParser.parse_args()
 
 
@@ -83,8 +83,22 @@ elif year == 2017:
 
     JERData     = JetResolution('Fall17_25nsV1_DATA')
     JERMC       = JetResolution('Fall17_25nsV1_MC')
-    paramsData  = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
-    paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
+
+## no EE jets in METSig (and tuning)
+    paramsData  = [1.957222895585727, 1.9729235168459986, 1.90948681548405, 1.6360930500389212, 1.4258381193442973, 0.0004736982371569354, 0.6723294208092309]
+    paramsMC    = [1.2241980571984066, 1.1869013615009936, 1.2102170428976644, 1.2081321118729322, 1.3823907717329618, -0.39694728791067135, 0.6841860339541063]
+
+### no sig max in tuning
+#    paramsData  = [1.966462143930697, 1.937183271447419, 1.8657691786964459, 1.6690843411711644, 1.4288816064105585, -0.00040472779927774936, 0.6722445090422673]
+#    paramsMC    = [1.215607616120827, 1.2063625156082602, 1.2306271643996056, 1.2462203247952433, 1.393142812137987, 0.009617412335929804, 0.6826006402909576]
+
+## EE Fix tuning
+#    paramsData  = [1.8203205027930778, 1.831631046506774, 1.7677237626986682, 1.5918292402822833, 1.367835925196143, -0.00019188634750270158, 0.6536545242198241]
+#    paramsMC    = [0.9407084182022997, 0.9523526365256799, 1.0575730226561166, 1.172357726178777, 1.322739950549703, -0.006175237894865501, 0.6658458528486568]
+
+## old tuning
+#    paramsData  = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
+#    paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
     
 elif year == 2018:
     postProcessing_directory = "2018_v7/dimuon-met/"
@@ -149,6 +163,8 @@ read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_ph
 
 sequence = []
 
+vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
+
 def calcMETSig( event, sample ):
     if sample.isData:
         JER = JERData
@@ -156,7 +172,11 @@ def calcMETSig( event, sample ):
     else:
         JER = JERMC
         params = paramsMC
-    ev = Event(event, JER, isData=sample.isData)
+    if year == 2017: METCollection = "METFixEE2017_pt"
+    else: METCollection = "MET_pt"
+    if year == 2018: JetCollection = "Jet_pt_nom"
+    else: JetCollection = "Jet_pt"
+    ev = Event(event, JER, isData=sample.isData, METCollection=METCollection, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
     event.Jet_dpt = [ x for x in ev.Jet_dpt ]
@@ -796,7 +816,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,2.5,3.0, 32, -3.2, 3.2]
+    binning = [20,2.6,3.2, 32, -3.2, 3.2]
   ))
 
   plots2D.append(Plot2D(
@@ -804,7 +824,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.0,-2.5, 32, -3.2, 3.2]
+    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
   ))
   
   ### 2D DY plots ###
@@ -821,7 +841,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,2.5,3.0, 32, -3.2, 3.2]
+    binning = [20,2.6,3.2, 32, -3.2, 3.2]
   ))
 
   plots2D.append(Plot2D(
@@ -829,7 +849,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.0,-2.5, 32, -3.2, 3.2]
+    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
   ))
 
   ### 2D DY plots ###
@@ -846,7 +866,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,2.5,3.0, 32, -3.2, 3.2]
+    binning = [20,-3.2,2.6, 32, -3.2, 3.2]
   ))
 
   plots2D.append(Plot2D(
@@ -854,7 +874,7 @@ for index, mode in enumerate(allModes):
     texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
     name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
     attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.0,-2.5, 32, -3.2, 3.2]
+    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
   ))
 
   plotting.fill( plots+plots2D, read_variables = read_variables, sequence = sequence)

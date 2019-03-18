@@ -22,15 +22,17 @@ from nanoMET.core.JetResolution import JetResolution
 
 class run:
 
-    def __init__(self, samples, selection, jetResolution, outfile="results/tune", maxN=1e6):
+    def __init__(self, samples, selection, jetResolution, outfile="results/tune", METCollection='MET_pt', JetCollection="Jet_pt", maxN=1e6, vetoEtaRegion=(10,10)):
         # Need fill a list in order to do the minimization, reading from the tree is too slow
 
         self.eventlist = []
         if samples[0].isData:
-            self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
+            self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', '%s/F'%METCollection, 'MET_phi/F', 'MET_sumPt/F'] )
         else:
-            self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'MET_pt/F', 'MET_phi/F', 'MET_sumPt/F'] )
+            self.variables = map( TreeVariable.fromString,  ['weight/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', '%s/F'%METCollection, 'MET_phi/F', 'MET_sumPt/F'] )
         self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I,cleanmaskMETSig/I,cleanmaskMETSigRec/I]' ) ]
+        if JetCollection=='Jet_pt_nom':
+            self.variables += [VectorTreeVariable.fromString('Jet[pt_nom/F]')]
         self.outfile = outfile
 
         for s in samples:
@@ -57,7 +59,7 @@ class run:
             while reader.run():
                 i+=1
                 if random.random() < fracToKeep:
-                    tmp_eventlist += [Event(reader.event, jetResolution, weightModifier=weightModifier, isData=s.isData)]
+                    tmp_eventlist += [Event(reader.event, jetResolution, weightModifier=weightModifier, isData=s.isData, METCollection=METCollection, JetCollection=JetCollection, vetoEtaRegion=(10,10))]
                 update_progress(i/nEvents)
             
             print

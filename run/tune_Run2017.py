@@ -21,13 +21,13 @@ from Samples.Tools.metFilters   import getFilterCut
 
 from run import run
 
-postProcessing_directory = "2017_v6/dimuon/"
+postProcessing_directory = "2017_v8/dimuon/"
 from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
 
 # define the selection
 leptonSelection = "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0"
 preselection    = cutInterpreter.cutString('looseLeptonVeto-onZ')
-trigger         = "( %s )"%" || ".join(['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27'])#, 'HLT_IsoTkMu27'])
+trigger         = "( %s )"%" || ".join(['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8", 'HLT_IsoMu27'])
 EE_protection   = "Sum$((cos(Jet_phi-MET_phi)*Jet_pt*Jet_neEmEF)*(cos(Jet_phi-MET_phi)<cos(2*pi/3.)))/MET_pt"
 eventfilter     = getFilterCut( 2017, isData=True)
 
@@ -37,9 +37,9 @@ JR = JetResolution('Fall17_V3_DATA') # similar to Fall17_25nsV1 and Fall17_V2
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
 #DoubleMuon_Run2016.reduceFiles(to=3)
-r = run([DoubleMuon_Run2017], sel, JR, outfile="results/tune_DoubleMuon_Run2017_incl_v4", maxN=5e5)
+r = run([DoubleMuon_Run2017], sel, JR, outfile="results/tune_DoubleMuon_Run2017_FixEE2017_noMax_noEE_v8", METCollection="METFixEE2017_pt", maxN=5e5, vetoEtaRegion=(2.65,3.14))
 
 LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 
-r.minimize()
+r.minimize(maxSig=80)
 

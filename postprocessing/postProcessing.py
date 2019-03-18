@@ -14,6 +14,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import M
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017, pufile_data2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib                import jetRecalib
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.METminProducer        import METminProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
@@ -37,6 +38,9 @@ logger = _logger.get_logger(options.logLevel, logFile = None)
 
 # from RootTools
 from RootTools.core.standard            import *
+
+def extractEra(sampleName):
+    return sampleName[sampleName.find("Run"):sampleName.find("Run")+len('Run2000A')]
 
 # Import samples
 year = int(options.year)
@@ -87,6 +91,12 @@ else:
 logger.info("Sample contains %s files", len(sample.files))
 sample.files = sorted(sample.files) # in order to avoid some random ordered file list, different in each job
 
+if sample.isData:
+    era = extractEra(samples[0].name)[-1]
+else:
+    era = None
+print "######### Era %s ########"%era
+
 # calculate the lumi scale factor for the weight
 targetLumi = 1000.
 if sample.isData:
@@ -94,11 +104,14 @@ if sample.isData:
 else:
     lumiScaleFactor = sample.xSection * targetLumi / float(sample.normalization)
 
+keepSampleName = sample.name # to mitigate Mateusz change of naming convention
+
 # filebased job splitting
 len_orig = len(sample.files)
 logger.info("Sample has %s files", len_orig)
 json = sample.json # pickup json from sample, as defined in the Sample repository
 sample = sample.split( n=options.nJobs, nSub=options.job)
+sample.name = keepSampleName
 
 logger.info("Will run over %s files", len(sample.files))
 logger.info("Running over files %s", sample.files)
@@ -160,7 +173,21 @@ elif year == 2017:
     metSigParamsData    = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
-    JEC                 = "Fall17_17Nov2017_V32_MC"     if not sample.isData else "Fall17_17Nov2017_V32_DATA"
+    if sample.isData:
+        if sample.name.count('Run2017B'):
+            JEC         = "Fall17_17Nov2017B_V32_DATA"
+        elif sample.name.count('Run2017C'):
+            JEC         = "Fall17_17Nov2017C_V32_DATA"
+        elif sample.name.count('Run2017D'):
+            JEC         = "Fall17_17Nov2017D_V32_DATA"
+        elif sample.name.count('Run2017E'):
+            JEC         = "Fall17_17Nov2017E_V32_DATA"
+        elif sample.name.count('Run2017F'):
+            JEC         = "Fall17_17Nov2017F_V32_DATA"
+        else:
+            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
+    else:
+        JEC             = "Fall17_17Nov2017_V32_MC"
     jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
 
 elif year == 2018:
@@ -169,8 +196,15 @@ elif year == 2018:
     metSigParamsData    = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
-    JEC                 = "Fall17_17Nov2017_V32_MC"     if not sample.isData else "Fall17_17Nov2017_V32_DATA"
-    jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
+    if sample.isData:
+        if sample.name.count("Run2018"):
+            JEC         = "Autumn18_Run%s_V8_DATA"%era
+        else:
+            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
+    else:
+        JEC             = "Autumn18_V8_MC"
+
+jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True)
 
 
 metSigParams            = metSigParamsMC                if not sample.isData else metSigParamsData
@@ -180,6 +214,7 @@ if sample.isData:
         lumiWeightProducer(1, isData=True),
         METSigProducer(JER, metSigParams),
         applyJSON(json),
+        jetRecalib(JEC),
         METminProducer(isData=True),
         # MET significance producer
     ]

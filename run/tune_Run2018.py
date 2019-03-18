@@ -21,7 +21,7 @@ from Samples.Tools.metFilters   import getFilterCut
 
 from run import run
 
-postProcessing_directory = "2018_v6/dimuon/"
+postProcessing_directory = "2018_v8/dimuon/"
 from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
 
 # define the selection
@@ -32,10 +32,10 @@ eventfilter     = getFilterCut( 2018, isData=True)
 
 sel             = " && ".join([leptonSelection, preselection, trigger, eventfilter])
 
-JR = JetResolution('Fall17_V3_DATA') # similar to Fall17_25nsV1 and Fall17_V2
+JR = JetResolution('Autumn18_V1_DATA')
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
-r = run([DoubleMuon_Run2018], sel, JR, outfile="results/tune_DoubleMuon_Run2018_incl_v3", maxN=3*1e5)
+r = run([DoubleMuon_Run2018], sel, JR, outfile="results/tune_DoubleMuon_Run2018_incl_v8", maxN=3*1e5, METCollection="MET_pt_nom", JetCollection="Jet_pt_nom")
 
 LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 

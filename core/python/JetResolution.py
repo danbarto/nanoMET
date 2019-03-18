@@ -26,14 +26,14 @@ class JetResolution:
         self.res_phi        = ROOT.JME.JetResolution("%s/%s_PhiResolution_AK4PFchs.txt"%(self.JERdirectory, self.JERera))
         self.jer_SF         = ROOT.JME.JetResolutionScaleFactor("%s/%s_SF_AK4PFchs.txt"%(self.JERdirectory, self.JERera))
 
-    def getJER(self, event):
+    def getJER(self, event, JetCollection='Jet_pt'):
         # calculate JER for all jets in the events
         event.Jet_dpt  = []
         event.Jet_dphi = []
         for i in range(event.nJet):
             jet = ROOT.JME.JetParameters()
             # rho in fact only needed for SF
-            jet.setJetEta(event.Jet_eta[i]).setJetPt(event.Jet_pt[i]).setRho(event.fixedGridRhoFastjetAll)
+            jet.setJetEta(event.Jet_eta[i]).setJetPt(getattr(event, JetCollection)[i]).setRho(event.fixedGridRhoFastjetAll)
             event.Jet_dpt    += [ self.res_pt.getResolution(jet) ]
             event.Jet_dphi   += [ self.res_phi.getResolution(jet) ]
             
