@@ -21,3 +21,4 @@ color.TTJets        = ROOT.kCyan-6
 color.diboson       = ROOT.kRed-7
 color.TTZ           = ROOT.kMagenta-5
 color.WJets         = ROOT.kBlue-6
+color.rare          = ROOT.kBlue-2

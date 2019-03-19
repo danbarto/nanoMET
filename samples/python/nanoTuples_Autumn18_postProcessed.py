@@ -37,5 +37,5 @@ directories = { key : [ os.path.join( data_directory, postProcessing_directory, 
 DY_LO_18            = Sample.fromDirectory(name="DY_LO",            treeName="Events", isData=False, color=color.DY,            texName="DY (LO)",                  directory=directories['DY_LO'])
 Top_18              = Sample.fromDirectory(name="Top",              treeName="Events", isData=False, color=color.TTJets,        texName="t(#bar{t})",               directory=directories['Top'])
 diboson_18          = Sample.fromDirectory(name="VVTo2L2Nu",        treeName="Events", isData=False, color=color.diboson,       texName="diboson",                  directory=directories['diboson'])
-rare_18             = Sample.fromDirectory(name="rare",             treeName="Events", isData=False, color=color.diboson,       texName="rare",                     directory=directories['rare'])
+rare_18             = Sample.fromDirectory(name="rare",             treeName="Events", isData=False, color=color.rare,          texName="rare",                     directory=directories['rare'])
 #WJets_18            = Sample.fromDirectory(name="WJets",            treeName="Events", isData=False, color=color.WJets,         texName="W+jets",                   directory=directories['WJets'])

@@ -101,15 +101,15 @@ elif year == 2017:
 #    paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
     
 elif year == 2018:
-    postProcessing_directory = "2018_v7/dimuon-met/"
+    postProcessing_directory = "2018_v8/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v7/dimuon-met/"
+    postProcessing_directory = "2018_v8/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
-    mc          = [DY_LO_18, Top_18, VVTo2L2Nu_18]#, WJets_18]
+    mc          = [DY_LO_18, Top_18, diboson_18, rare_18]#, WJets_18]
     dy          = DY_LO_18
     top         = Top_18
-    vv          = VVTo2L2Nu_18
+    vv          = diboson_18
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
     JERData     = JetResolution('Fall17_25nsV1_DATA')
@@ -155,6 +155,8 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 #
 read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]", "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]", "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"]
+if year == 2018:
+    read_variables += ["Jet[pt_nom/F]", "MET_pt_nom/F"]
 #read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F]", "nJet/I"]
 
 #read_variables += ["Electron[pt/F,eta/F,phi/F,pfRelIso03_all/F]", "dl_mass/F", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8/O", "HLT_IsoMu24/O"]
@@ -163,7 +165,8 @@ read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_ph
 
 sequence = []
 
-vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
+vetoEtaRegion = (2.65, 3.14) if year == False else (10,10)
+jetThreshold = 25 if year == 2017 else 15
 
 def calcMETSig( event, sample ):
     if sample.isData:
@@ -176,7 +179,7 @@ def calcMETSig( event, sample ):
     else: METCollection = "MET_pt"
     if year == 2018: JetCollection = "Jet_pt_nom"
     else: JetCollection = "Jet_pt"
-    ev = Event(event, JER, isData=sample.isData, METCollection=METCollection, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion)
+    ev = Event(event, JER, isData=sample.isData, METCollection=METCollection, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
     event.Jet_dpt = [ x for x in ev.Jet_dpt ]
@@ -592,7 +595,13 @@ for index, mode in enumerate(allModes):
       attribute = TreeVariable.fromString('MET_significance/F'),
       binning= [50,0,100],
     ))
-
+    
+    plots.append(Plot(
+      texX = 'E_{T}^{miss} recorr', texY = 'Number of Events',
+      attribute = TreeVariable.fromString('MET_pt_nom/F'),
+      binning= [400/20,0,400],
+    ))
+    
   plots.append(Plot(
     texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',
     name = "MET_significance_rec",
