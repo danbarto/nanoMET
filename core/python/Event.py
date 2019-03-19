@@ -58,7 +58,7 @@ class Event:
 
         return LL
 
-    def calcMETSig(self, args, jetThreshold=15.):
+    def calcMETSig(self, args):
         
         #vetoEtaRegion = self.vetoEtaRegion
         

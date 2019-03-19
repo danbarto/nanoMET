@@ -176,6 +176,7 @@ def calcMETSig( event, sample ):
         JER = JERMC
         params = paramsMC
     if year == 2017: METCollection = "METFixEE2017_pt"
+    elif year == 2018: METCollection = "MET_pt_nom"
     else: METCollection = "MET_pt"
     if year == 2018: JetCollection = "Jet_pt_nom"
     else: JetCollection = "Jet_pt"

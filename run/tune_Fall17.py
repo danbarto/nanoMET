@@ -39,7 +39,7 @@ JR = JetResolution('Fall17_V3_MC')
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
 #DoubleMuon_Run2016.reduceFiles(to=3)
 #r = run([VVTo2L2Nu_17], sel, JR, outfile="results/tune_Fall17_test", maxN=1e5)
-r = run([DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17], sel, JR, outfile="results/tune_Fall17_FixEE2017_noMax_noEE_v8", METCollection="METFixEE2017_pt", maxN=5e5, vetoEtaRegion=(2.65,3.14))
+r = run([DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17], sel, JR, outfile="results/tune_Fall17_FixEE2017_noMax_noEE_v8", METCollection="METFixEE2017_pt", maxN=1e5, vetoEtaRegion=(2.65,3.14), jetThreshold=15.)
 
 LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
 
