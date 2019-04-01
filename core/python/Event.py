@@ -16,7 +16,7 @@ def cartesian(pt, phi):
     return (pt*math.cos(phi), pt*math.sin(phi))
 
 class Event:
-    def __init__(self, event, jetResolution, weightModifier=1, METCollection="MET_pt", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15.):
+    def __init__(self, event, jetResolution, weightModifier=1, METPtVar="MET_pt", METPhiVar="MET_phi", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15.):
         jetResolution.getJER(event, JetCollection=JetCollection)
 
         self.nJet       = event.nJet
@@ -34,8 +34,8 @@ class Event:
         self.Jet_dpt    = [ event.Jet_dpt[i]    for i in acceptedJetIndices ]
         self.Jet_dphi   = [ event.Jet_dphi[i]   for i in acceptedJetIndices ]
 
-        self.MET_pt             = getattr(event, METCollection)
-        self.MET_phi            = getattr(event, "MET_phi") # phi not affected by corrections
+        self.MET_pt             = getattr(event, METPtVar)
+        self.MET_phi            = getattr(event, METPhiVar)
         self.MET_sumPt          = getattr(event, "MET_sumPt")
         #self.MET_significance   = event.MET_significance # not in nanoAOD right now
         

@@ -26,15 +26,19 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',            action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--noData',              action='store_true', default=False,           help='also plot data?')
 argParser.add_argument('--small',               action='store_true',     help='Run only on a small subset of the data?', )
-argParser.add_argument('--verySmall',               action='store_true',     help='Run only on a small subset of the data?', )
+argParser.add_argument('--calcMETSig',          action='store_true',     help='Calculate MET Significance?', )
+argParser.add_argument('--verySmall',           action='store_true',     help='Run only on a small subset of the data?', )
 argParser.add_argument('--plot_directory',      action='store',      default='v8_noSigMax')
 argParser.add_argument('--year',                action='store',      default=2016)
+argParser.add_argument('--tuneEra',             action='store',      default=False)
+argParser.add_argument('--jetThreshold',        action='store',      default=False)
 argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ')
 args = argParser.parse_args()
 
 
 
 year = int(args.year)
+
 #
 # Logger
 #
@@ -47,11 +51,54 @@ from nanoMET.core.JetResolution import *
 from nanoMET.core.Event         import Event
 
 if args.small:                        args.plot_directory += "_small"
-if args.verySmall:                        args.plot_directory += "_verySmall"
+if args.verySmall:                    args.plot_directory += "_verySmall"
 if args.noData:                       args.plot_directory += "_noData"
+if args.tuneEra:                      args.plot_directory += "_tune%s"%args.tuneEra
+if args.jetThreshold:                 args.plot_directory += "_sumPt%s"%args.jetThreshold
 #
 # Make samples, will be searched for in the postProcessing directory
 #
+
+tuneParams = {
+    2016: { 
+            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596],
+            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+            },
+    20167: { 
+            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.7502485988002288],
+            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.7397929625473758]
+            },
+    2017: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [1.1106319092645605, 1.1016751869920842, 1.0725643000703053, 1.0913641155398053, 1.8499497840145123, -0.0015646588275905911, 0.7397929625473758]
+            },
+    20171: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [0.9*1.5622, 0.9*1.540194, 0.9*1.566197, 0.9*1.513250, 0.9*1.939894, -0.0015646588275905911, 0.7397929625473758]
+            },
+    20172: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [0.95*1.5622, 0.95*1.540194, 0.95*1.566197, 0.95*1.513250, 0.95*1.939894, -0.0015646588275905911, 0.7397929625473758]
+            },
+    20173: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.0015646588275905911, 0.7397929625473758]
+            },
+    20174: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [1.1*1.5622583144490318, 1.1*1.540194388842639, 1.1*1.566197393467264, 1.1*1.5132500586113067, 1.1*1.9398948489956538, -0.0015646588275905911, 0.7397929625473758]
+            },
+    2018: {
+            'data': [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097],
+            'mc':   [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
+            }
+    }
+
+tuneEra = year if not args.tuneEra else int(args.tuneEra)
+
+paramsData  = tuneParams[tuneEra]['data']
+paramsMC    = tuneParams[tuneEra]['mc']
+
 if year == 2016:
     postProcessing_directory = "2016_v6/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
@@ -66,8 +113,7 @@ if year == 2016:
 
     JERData     = JetResolution('Summer16_25nsV1_DATA')
     JERMC       = JetResolution('Summer16_25nsV1_MC')
-    paramsData  = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
-    paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+
 
 elif year == 2017:
     postProcessing_directory = "2017_v8/dimuon/"
@@ -84,9 +130,15 @@ elif year == 2017:
     JERData     = JetResolution('Fall17_25nsV1_DATA')
     JERMC       = JetResolution('Fall17_25nsV1_MC')
 
-## no EE jets in METSig (and tuning)
-    paramsData  = [1.957222895585727, 1.9729235168459986, 1.90948681548405, 1.6360930500389212, 1.4258381193442973, 0.0004736982371569354, 0.6723294208092309]
-    paramsMC    = [1.2241980571984066, 1.1869013615009936, 1.2102170428976644, 1.2081321118729322, 1.3823907717329618, -0.39694728791067135, 0.6841860339541063]
+## sumPt with jets < 25 in tune
+#    paramsData  = [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288]
+#    paramsMC    = [1.1106319092645605, 1.1016751869920842, 1.0725643000703053, 1.0913641155398053, 1.8499497840145123, -0.0015646588275905911, 0.7397929625473758]
+#
+### no EE jets in METSig (and tuning)
+#    #paramsData  = [1.957222895585727, 1.9729235168459986, 1.90948681548405, 1.6360930500389212, 1.4258381193442973, 0.0004736982371569354, 0.6723294208092309]
+#    paramsData  = [2.0563574969195284, 2.0350922422571185, 1.9679260575496922, 1.8131965623423398, 2.0514491151904264, 0.00038779929766834373, 0.7000316076675241]
+#    #paramsMC    = [1.2241980571984066, 1.1869013615009936, 1.2102170428976644, 1.2081321118729322, 1.3823907717329618, -0.39694728791067135, 0.6841860339541063] # probably wrong
+#    paramsMC    = [1.2555429763964476, 1.1731433624038419, 1.2492796035979699, 1.2065137002881199, 1.4168482891432284, -0.5544468130563261, 0.7136789915805164]
 
 ### no sig max in tuning
 #    paramsData  = [1.966462143930697, 1.937183271447419, 1.8657691786964459, 1.6690843411711644, 1.4288816064105585, -0.00040472779927774936, 0.6722445090422673]
@@ -112,10 +164,17 @@ elif year == 2018:
     vv          = diboson_18
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
-    JERData     = JetResolution('Fall17_25nsV1_DATA')
-    JERMC       = JetResolution('Fall17_25nsV1_MC')
-    paramsData  = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
-    paramsMC    = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
+    JERData     = JetResolution('Autumn18_V1_DATA')
+    JERMC       = JetResolution('Autumn18_V1_MC')
+
+#    paramsData  = [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097]
+#    paramsMC    = [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
+## old tunes
+#    #paramsData  = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
+#    paramsData  = [1.8368013628479065, 1.9290201989862157, 1.8259539414492025, 1.5333110456125958, 1.7691679140127663, -0.0007978172145023804, 0.6822519604496338]
+#    #paramsMC    = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
+#    paramsMC    = [1.3064958924256105, 1.3928299525663819, 1.3244074093077896, 1.2590854555163649, 1.0826747081096033, 0.007648950323072088, 0.6283900186403472]
+
 #
 # Text on the plots
 #
@@ -166,21 +225,29 @@ if year == 2018:
 sequence = []
 
 vetoEtaRegion = (2.65, 3.14) if year == False else (10,10)
-jetThreshold = 25 if year == 2017 else 15
+jetThreshold = 25 if (year == 2017 or year == 2018) else 15
+if args.jetThreshold: jetThreshold = float(args.jetThreshold)
 
 def calcMETSig( event, sample ):
+    #print sample.name, sample.isData
     if sample.isData:
         JER = JERData
         params = paramsData
     else:
         JER = JERMC
         params = paramsMC
-    if year == 2017: METCollection = "METFixEE2017_pt"
-    elif year == 2018: METCollection = "MET_pt_nom"
-    else: METCollection = "MET_pt"
+    if year == 2017:
+        METPtVar = "METFixEE2017_pt"
+        METPhiVar = "METFixEE2017_phi"
+    elif year == 2018:
+        METPtVar = "MET_pt_nom"
+        METPhiVar = "MET_phi"
+    else:
+        METPtVar = "MET_pt"
+        METPhiVar = "MET_phi"
     if year == 2018: JetCollection = "Jet_pt_nom"
     else: JetCollection = "Jet_pt"
-    ev = Event(event, JER, isData=sample.isData, METCollection=METCollection, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
+    ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
     event.Jet_dpt = [ x for x in ev.Jet_dpt ]
@@ -362,7 +429,38 @@ def getNJet( event, sample ):
     event.sumPtneEmEF_lowPt_eta2p5to3p1 = sumPtneEmEF
     event.sumPtneHEF_lowPt_eta2p5to3p1 = sumPtneHEF
 
-sequence += [ calcMETSig, getMET_neEmEBalace, getNJet ]
+def getJets( event, sample ):
+    allJets = []
+    for i in range(event.nJet):
+        allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmaskMETSig[i], 'neHEF':event.Jet_neHEF[i]})
+
+    highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<5.0 and j['jetId']>5 and j['cleanmask']>0), allJets )
+
+    event.j1_pt     = -99
+    event.j1_eta    = -99
+    event.j1_phi    = -99
+
+    event.j2_pt     = -99
+    event.j2_eta    = -99
+    event.j2_phi    = -99
+
+
+    if len(highPtJets)>0:
+        event.j1_pt     = highPtJets[0]['pt']
+        event.j1_eta    = highPtJets[0]['eta']
+        event.j1_phi    = highPtJets[0]['phi']
+
+    if len(highPtJets)>1:
+        event.j2_pt     = highPtJets[1]['pt']
+        event.j2_eta    = highPtJets[1]['eta']
+        event.j2_phi    = highPtJets[1]['phi']
+
+sequence += [ getJets ]
+
+if args.calcMETSig:
+    sequence += [ calcMETSig ]
+if year == 2017:
+    sequence += [ getMET_neEmEBalace, getNJet ]
 
 def getLeptonSelection( mode ):
   if   mode=="mumu":
@@ -439,6 +537,7 @@ for index, mode in enumerate(allModes):
   Plot2D.setDefaults(weight = weight_, selectionString = cutInterpreter.cutString(args.selection), histo_class=ROOT.TH2D)
   
   plots = []
+  plots2D = []
 
   plots.append(Plot(
     name = 'yield', texX = 'yield', texY = 'Number of Events',
@@ -464,108 +563,109 @@ for index, mode in enumerate(allModes):
       binning=[400/20,0,400],
   ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} neEmEBalance', texY = 'Number of Events',
-      name = "MET_neEmEBalace",
-      attribute = lambda event, sample: event.MET_neEmEBalace,
-      binning=[80,0,2.0],
-  ))
+  #if year == 2017:
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} neEmEBalance', texY = 'Number of Events',
+  #      name = "MET_neEmEBalace",
+  #      attribute = lambda event, sample: event.MET_neEmEBalace,
+  #      binning=[80,0,2.0],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min.', texY = 'Number of Events',
-      name = "MET_min",
-      attribute = lambda event, sample: event.MET_min,
-      binning=[400/20,0,400],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min.', texY = 'Number of Events',
+  #      name = "MET_min",
+  #      attribute = lambda event, sample: event.MET_min,
+  #      binning=[400/20,0,400],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min. pseudo jet', texY = 'Number of Events',
-      name = "MET_min_pseudoJet",
-      attribute = lambda event, sample: event.MET_min_pseudoJet,
-      binning=[400/20,0,400],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min. pseudo jet', texY = 'Number of Events',
+  #      name = "MET_min_pseudoJet",
+  #      attribute = lambda event, sample: event.MET_min_pseudoJet,
+  #      binning=[400/20,0,400],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min. all jet', texY = 'Number of Events',
-      name = "MET_minX",
-      attribute = lambda event, sample: event.MET_minX,
-      binning=[400/20,0,400],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min. all jet', texY = 'Number of Events',
+  #      name = "MET_minX",
+  #      attribute = lambda event, sample: event.MET_minX,
+  #      binning=[400/20,0,400],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min. (MET>40)', texY = 'Number of Events',
-      name = "MET_min_MET40",
-      attribute = lambda event, sample: event.MET_min_MET40,
-      binning=[400/20,0,400],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min. (MET>40)', texY = 'Number of Events',
+  #      name = "MET_min_MET40",
+  #      attribute = lambda event, sample: event.MET_min_MET40,
+  #      binning=[400/20,0,400],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min. ratio', texY = 'Number of Events',
-      name = "MET_min_ratio",
-      attribute = lambda event, sample: event.MET_min_ratio,
-      binning=[80,0,2.0],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min. ratio', texY = 'Number of Events',
+  #      name = "MET_min_ratio",
+  #      attribute = lambda event, sample: event.MET_min_ratio,
+  #      binning=[80,0,2.0],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'E_{T}^{miss} min. ratio (MET>40)', texY = 'Number of Events',
-      name = "MET_min_ratio_MET40",
-      attribute = lambda event, sample: event.MET_min_ratio_MET40,
-      binning=[80,0,2.0],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'E_{T}^{miss} min. ratio (MET>40)', texY = 'Number of Events',
+  #      name = "MET_min_ratio_MET40",
+  #      attribute = lambda event, sample: event.MET_min_ratio_MET40,
+  #      binning=[80,0,2.0],
+  #  ))
 
-  plots.append(Plot(
-      texX = '#alpha', texY = 'Number of Events',
-      name = "alpha",
-      attribute = lambda event, sample: event.alpha,
-      binning=[50,0,1.0],
-  ))
+  #  plots.append(Plot(
+  #      texX = '#alpha', texY = 'Number of Events',
+  #      name = "alpha",
+  #      attribute = lambda event, sample: event.alpha,
+  #      binning=[50,0,1.0],
+  #  ))
 
-  plots.append(Plot(
-      texX = '#alpha (MET>40)', texY = 'Number of Events',
-      name = "alpha_MET40",
-      attribute = lambda event, sample: event.alpha_MET40,
-      binning=[50,0,1.0],
-  ))
+  #  plots.append(Plot(
+  #      texX = '#alpha (MET>40)', texY = 'Number of Events',
+  #      name = "alpha_MET40",
+  #      attribute = lambda event, sample: event.alpha_MET40,
+  #      binning=[50,0,1.0],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'p_{T}(mis. Jet) (GeV)', texY = 'Number of Events',
-      name = "Jet_pt_EE",
-      attribute = lambda event, sample: event.Jet_pt_EE,
-      binning=[50,0,200],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'p_{T}(mis. Jet) (GeV)', texY = 'Number of Events',
+  #      name = "Jet_pt_EE",
+  #      attribute = lambda event, sample: event.Jet_pt_EE,
+  #      binning=[50,0,200],
+  #  ))
 
-  plots.append(Plot(
-      texX = 'p_{T}(mis. Jet, corr.) (GeV)', texY = 'Number of Events',
-      name = "Jet_pt_EE_corr",
-      attribute = lambda event, sample: event.Jet_pt_EE_corr,
-      binning=[50,0,200],
-  ))
+  #  plots.append(Plot(
+  #      texX = 'p_{T}(mis. Jet, corr.) (GeV)', texY = 'Number of Events',
+  #      name = "Jet_pt_EE_corr",
+  #      attribute = lambda event, sample: event.Jet_pt_EE_corr,
+  #      binning=[50,0,200],
+  #  ))
 
-  plots.append(Plot(
-      texX = '#phi (mis. Jet)', texY = 'Number of Events',
-      name = "Jet_phi_EE",
-      attribute = lambda event, sample: event.Jet_phi_EE,
-      binning=[64,-3.2,3.2],
-  ))
+  #  plots.append(Plot(
+  #      texX = '#phi (mis. Jet)', texY = 'Number of Events',
+  #      name = "Jet_phi_EE",
+  #      attribute = lambda event, sample: event.Jet_phi_EE,
+  #      binning=[64,-3.2,3.2],
+  #  ))
 
-  plots.append(Plot(
-      texX = '#eta (mis. Jet)', texY = 'Number of Events',
-      name = "Jet_eta_EE",
-      attribute = lambda event, sample: event.Jet_eta_EE,
-      binning=[64,-3.2,3.2],
-  ))
+  #  plots.append(Plot(
+  #      texX = '#eta (mis. Jet)', texY = 'Number of Events',
+  #      name = "Jet_eta_EE",
+  #      attribute = lambda event, sample: event.Jet_eta_EE,
+  #      binning=[64,-3.2,3.2],
+  #  ))
 
-  plots.append(Plot(
-      texX = '#phi(E_{T}^{miss})', texY = 'Number of Events / 20 GeV',
-      attribute = TreeVariable.fromString( "MET_phi/F" ),
-      binning=[10,-pi,pi],
-  ))
+  #plots.append(Plot(
+  #    texX = '#phi(E_{T}^{miss})', texY = 'Number of Events / 20 GeV',
+  #    attribute = TreeVariable.fromString( "MET_phi/F" ),
+  #    binning=[10,-pi,pi],
+  #))
 
-  plots.append(Plot(
-      texX = '#phi(E_{T}^{miss}) (raw)', texY = 'Number of Events / 20 GeV',
-      attribute = TreeVariable.fromString( "RawMET_phi/F" ),
-      binning=[10,-pi,pi],
-  ))
+  #plots.append(Plot(
+  #    texX = '#phi(E_{T}^{miss}) (raw)', texY = 'Number of Events / 20 GeV',
+  #    attribute = TreeVariable.fromString( "RawMET_phi/F" ),
+  #    binning=[10,-pi,pi],
+  #))
 
   if year == 2017:
     #METFixEE2017_pt
@@ -582,12 +682,12 @@ for index, mode in enumerate(allModes):
         binning=[10,-pi,pi],
     ))
     
-    plots.append(Plot(
-        texX = 'badJet Energy', texY = 'Number of Events / 20 GeV',
-        name = 'badJet_Energy',
-        attribute = lambda event, sample: event.badJet_Energy,
-        binning=[40,0,400],
-    ))
+    #plots.append(Plot(
+    #    texX = 'badJet Energy', texY = 'Number of Events / 20 GeV',
+    #    name = 'badJet_Energy',
+    #    attribute = lambda event, sample: event.badJet_Energy,
+    #    binning=[40,0,400],
+    #))
 
   # removed from nanoAOD
   if year == 2018:
@@ -603,12 +703,13 @@ for index, mode in enumerate(allModes):
       binning= [400/20,0,400],
     ))
     
-  plots.append(Plot(
-    texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',
-    name = "MET_significance_rec",
-    attribute = lambda event, sample: event.MET_significance_rec,
-    binning= [50,0,100],
-  ))
+  if args.calcMETSig:
+    plots.append(Plot(
+      texX = 'E_{T}^{miss} Significance rec.', texY = 'Number of Events',
+      name = "MET_significance_rec",
+      attribute = lambda event, sample: event.MET_significance_rec,
+      binning= [50,0,100],
+    ))
 
   plots.append(Plot(
     texX = '#Sigma p_{T} (GeV)', texY = 'Number of Events',
@@ -649,7 +750,6 @@ for index, mode in enumerate(allModes):
     binning=[16,-3.2,3.2],
   ))
 
-
   plots.append(Plot(
     texX = '#eta(l_{1}) (GeV)', texY = 'Number of Events / 15 GeV',
     name = 'l1_eta',
@@ -685,208 +785,253 @@ for index, mode in enumerate(allModes):
     binning=[28,20,300],
   ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (EE)', texY = 'Number of Events',
-    name = 'nJet_EE',
-    attribute = lambda event, sample: event.nJet_EE,
-    binning=[15,-0.5,14.5],
-  ))
+  ## jets
 
   plots.append(Plot(
-    texX = 'N_{j} (EE, pseud-jets)', texY = 'Number of Events',
-    name = 'nJet_pseudoJets',
-    attribute = lambda event, sample: event.nJet_pseudoJets,
-    binning=[20,0,500],
+    texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j1_pt',
+    attribute = lambda event, sample: event.j1_pt,
+    binning=[20,0,400],
   ))
 
   plots.append(Plot(
-    texX = 'N_{j} (all jets)', texY = 'Number of Events',
-    name = 'nJet',
-    attribute = lambda event, sample: event.nJet,
-    binning=[40,0,40],
+    texX = '#phi(j_{1}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j1_phi',
+    attribute = lambda event, sample: event.j1_phi,
+    binning=[16,-3.2,3.2],
   ))
 
   plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
-    name = 'nJet_lowPt',
-    attribute = lambda event, sample: event.nJet_lowPt,
-    binning=[40,0,40],
+    texX = '#eta(j_{1}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j1_eta',
+    attribute = lambda event, sample: event.j1_eta,
+    binning=[50,-5.0,5.0],
   ))
 
   plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, |#eta|<0.8)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta0to0p8',
-    attribute = lambda event, sample: event.nJet_lowPt_eta0to0p8,
-    binning=[20,0,20],
+    texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j2_pt',
+    attribute = lambda event, sample: event.j2_pt,
+    binning=[20,0,400],
   ))
 
   plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, 0.8<|#eta|<1.3)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta0p8to1p3',
-    attribute = lambda event, sample: event.nJet_lowPt_eta0p8to1p3,
-    binning=[20,0,20],
+    texX = '#phi(j_{2}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j2_phi',
+    attribute = lambda event, sample: event.j2_phi,
+    binning=[16,-3.2,3.2],
   ))
 
   plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, 1.3<|#eta|<1.9)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta1p3to1p9',
-    attribute = lambda event, sample: event.nJet_lowPt_eta1p3to1p9,
-    binning=[20,0,20],
+    texX = '#eta(j_{2}) (GeV)', texY = 'Number of Events / 15 GeV',
+    name = 'j2_eta',
+    attribute = lambda event, sample: event.j2_eta,
+    binning=[50,-5.0,5.0],
   ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, 1.9<|#eta|<2.5)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta1p9to2p5',
-    attribute = lambda event, sample: event.nJet_lowPt_eta1p9to2p5,
-    binning=[20,0,20],
-  ))
+  if year == 2017:
+    plots.append(Plot(
+      texX = 'N_{j} (EE)', texY = 'Number of Events',
+      name = 'nJet_EE',
+      attribute = lambda event, sample: event.nJet_EE,
+      binning=[15,-0.5,14.5],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta2p5to3p1',
-    attribute = lambda event, sample: event.nJet_lowPt_eta2p5to3p1,
-    binning=[20,0,20],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (EE, pseud-jets)', texY = 'Number of Events',
+      name = 'nJet_pseudoJets',
+      attribute = lambda event, sample: event.nJet_pseudoJets,
+      binning=[20,0,500],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (p_{T}<30 GeV, 3.1<|#eta|)', texY = 'Number of Events',
-    name = 'nJet_lowPt_eta3p1toInf',
-    attribute = lambda event, sample: event.nJet_lowPt_eta3p1toInf,
-    binning=[20,0,20],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (all jets)', texY = 'Number of Events',
+      name = 'nJet',
+      attribute = lambda event, sample: event.nJet,
+      binning=[40,0,40],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4)', texY = 'Number of Events',
-    name = 'nJet_good',
-    attribute = lambda event, sample: event.nJet_good,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
+      name = 'nJet_lowPt',
+      attribute = lambda event, sample: event.nJet_lowPt,
+      binning=[40,0,40],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4, no cleanmask)', texY = 'Number of Events',
-    name = 'nJet_good_noCleanmask',
-    attribute = lambda event, sample: event.nJet_good_noCleanmask,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, |#eta|<0.8)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta0to0p8',
+      attribute = lambda event, sample: event.nJet_lowPt_eta0to0p8,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{j} (all jets, no leptons)', texY = 'Number of Events',
-    name = 'nJet_noLeptons',
-    attribute = lambda event, sample: event.nJet_noLeptons,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, 0.8<|#eta|<1.3)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta0p8to1p3',
+      attribute = lambda event, sample: event.nJet_lowPt_eta0p8to1p3,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{e}', texY = 'Number of Events',
-    name = 'nElectron',
-    attribute = lambda event, sample: event.nElectron,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, 1.3<|#eta|<1.9)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta1p3to1p9',
+      attribute = lambda event, sample: event.nJet_lowPt_eta1p3to1p9,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{#mu}', texY = 'Number of Events',
-    name = 'nMuon',
-    attribute = lambda event, sample: event.nMuon,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, 1.9<|#eta|<2.5)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta1p9to2p5',
+      attribute = lambda event, sample: event.nJet_lowPt_eta1p9to2p5,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = 'N_{#gamma}', texY = 'Number of Events',
-    name = 'nPhoton',
-    attribute = lambda event, sample: event.nPhoton,
-    binning=[10,0,10],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta2p5to3p1',
+      attribute = lambda event, sample: event.nJet_lowPt_eta2p5to3p1,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = '#Sigma p_T*neEmEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-    name = 'sumPtneEmEF_lowPt_eta2p5to3p1',
-    attribute = lambda event, sample: event.sumPtneEmEF_lowPt_eta2p5to3p1,
-    binning=[20,0,100],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}<30 GeV, 3.1<|#eta|)', texY = 'Number of Events',
+      name = 'nJet_lowPt_eta3p1toInf',
+      attribute = lambda event, sample: event.nJet_lowPt_eta3p1toInf,
+      binning=[20,0,20],
+    ))
 
-  plots.append(Plot(
-    texX = '#Sigma p_T*neHEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-    name = 'sumPtneHEF_lowPt_eta2p5to3p1',
-    attribute = lambda event, sample: event.sumPtneHEF_lowPt_eta2p5to3p1,
-    binning=[20,0,100],
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4)', texY = 'Number of Events',
+      name = 'nJet_good',
+      attribute = lambda event, sample: event.nJet_good,
+      binning=[10,0,10],
+    ))
 
-  ### 2D Data plots ###
-  plots2D = []
-  plots2D.append(Plot2D(
-    stack = stackData,
-    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-    name = "Data_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-    binning = [40,0,200, 40, 0, 200]
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4, no cleanmask)', texY = 'Number of Events',
+      name = 'nJet_good_noCleanmask',
+      attribute = lambda event, sample: event.nJet_good_noCleanmask,
+      binning=[10,0,10],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackData,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,2.6,3.2, 32, -3.2, 3.2]
-  ))
+    plots.append(Plot(
+      texX = 'N_{j} (all jets, no leptons)', texY = 'Number of Events',
+      name = 'nJet_noLeptons',
+      attribute = lambda event, sample: event.nJet_noLeptons,
+      binning=[10,0,10],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackData,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-  ))
-  
-  ### 2D DY plots ###
-  plots2D.append(Plot2D(
-    stack = stackDY,
-    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-    name = "DY_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-    binning = [40,0,200, 40, 0, 200]
-  ))
+    plots.append(Plot(
+      texX = 'N_{e}', texY = 'Number of Events',
+      name = 'nElectron',
+      attribute = lambda event, sample: event.nElectron,
+      binning=[10,0,10],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackDY,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,2.6,3.2, 32, -3.2, 3.2]
-  ))
+    plots.append(Plot(
+      texX = 'N_{#mu}', texY = 'Number of Events',
+      name = 'nMuon',
+      attribute = lambda event, sample: event.nMuon,
+      binning=[10,0,10],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackDY,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-  ))
+    plots.append(Plot(
+      texX = 'N_{#gamma}', texY = 'Number of Events',
+      name = 'nPhoton',
+      attribute = lambda event, sample: event.nPhoton,
+      binning=[10,0,10],
+    ))
 
-  ### 2D DY plots ###
-  plots2D.append(Plot2D(
-    stack = stackTT,
-    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-    name = "Top_METvsMETmin",
-    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-    binning = [40,0,200, 40, 0, 200]
-  ))
+    plots.append(Plot(
+      texX = '#Sigma p_T*neEmEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+      name = 'sumPtneEmEF_lowPt_eta2p5to3p1',
+      attribute = lambda event, sample: event.sumPtneEmEF_lowPt_eta2p5to3p1,
+      binning=[20,0,100],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackTT,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.2,2.6, 32, -3.2, 3.2]
-  ))
+    plots.append(Plot(
+      texX = '#Sigma p_T*neHEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+      name = 'sumPtneHEF_lowPt_eta2p5to3p1',
+      attribute = lambda event, sample: event.sumPtneHEF_lowPt_eta2p5to3p1,
+      binning=[20,0,100],
+    ))
 
-  plots2D.append(Plot2D(
-    stack = stackTT,
-    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-    name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
-    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-  ))
+    ### 2D Data plots ###
+    plots2D.append(Plot2D(
+      stack = stackData,
+      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+      name = "Data_METvsMETmin",
+      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+      binning = [40,0,200, 40, 0, 200]
+    ))
 
+    plots2D.append(Plot2D(
+      stack = stackData,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,2.6,3.2, 32, -3.2, 3.2]
+    ))
+
+    plots2D.append(Plot2D(
+      stack = stackData,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+    ))
+    
+    ### 2D DY plots ###
+    plots2D.append(Plot2D(
+      stack = stackDY,
+      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+      name = "DY_METvsMETmin",
+      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+      binning = [40,0,200, 40, 0, 200]
+    ))
+
+    plots2D.append(Plot2D(
+      stack = stackDY,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,2.6,3.2, 32, -3.2, 3.2]
+    ))
+
+    plots2D.append(Plot2D(
+      stack = stackDY,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+    ))
+
+    ### 2D DY plots ###
+    plots2D.append(Plot2D(
+      stack = stackTT,
+      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+      name = "Top_METvsMETmin",
+      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+      binning = [40,0,200, 40, 0, 200]
+    ))
+
+    plots2D.append(Plot2D(
+      stack = stackTT,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,-3.2,2.6, 32, -3.2, 3.2]
+    ))
+
+    plots2D.append(Plot2D(
+      stack = stackTT,
+      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+      name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
+      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+    ))
+
+  #plotting.fill_with_draw( plots )
   plotting.fill( plots+plots2D, read_variables = read_variables, sequence = sequence)
 
   ## other 1D plots

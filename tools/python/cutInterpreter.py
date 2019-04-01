@@ -12,6 +12,7 @@ mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
 special_cuts = {
     # ("multiIsoVT":        "(1)", 
     "looseLeptonVeto":  "(Sum$(Electron_pt>15&&abs(Electron_eta)<2.4&&Electron_pfRelIso03_all<0.4) + Sum$(Muon_pt>15&&abs(Muon_eta)<2.4&&Muon_pfRelIso03_all<0.4) )==2",
+    "lepSel":           "l1_pt>30 && l2_pt>20",
     "badJetSrEVeto":    "Sum$(Jet_neEmEF*Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt<50))<200",
     "noEEJets":         "Sum$(Jet_pt>15&&abs(Jet_eta)>2.65&&abs(Jet_eta)<3.14)==0",
     "badJetSrEVetoV2":  "Sum$(Jet_neEmEF*Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))<(-(3./7)*Sum$(Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))+430)",

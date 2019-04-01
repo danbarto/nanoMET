@@ -10,6 +10,8 @@ import copy
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
+argParser.add_argument('--year',                action='store',      default=2016)
+argParser.add_argument('--tuneEra',             action='store',      default=False)
 argParser.add_argument('--small', action='store_true', help='Small?')
 args = argParser.parse_args()
 
@@ -18,6 +20,8 @@ args = argParser.parse_args()
 from RootTools.core.standard import *
 
 plot_directory              = "/afs/hephy.at/user/d/dspitzbart/www/nanoMET/validation/"
+
+if args.tuneEra:                      plot_directory += "tune%s/"%args.tuneEra
 
 import nanoMET.tools.logger as logger
 
@@ -45,44 +49,97 @@ directories = { key : [ os.path.join( data_directory, postProcessing_directory, 
 
 DYJetsToLL_16  = Sample.fromDirectory(name="DYJets_16", treeName="Events", isData=False, color=color.DY, texName="DY", directory=directories['DYJetsToLL'])
 
-
 data_directory              = "/afs/hephy.at/data/dspitzbart03/nanoSamples/"
-postProcessing_directory    = "2017_v6/dimuon/"
+postProcessing_directory    = "2017_v8/dimuon/"
 dirs = {}
 dirs['DYJetsToLL']          = ["DYJetsToLL_M50_LO"]
+dirs['TTLep_pow']          = ["TTLep_pow"]
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 
+from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
 DYJetsToLL_17  = Sample.fromDirectory(name="DYJets_17", treeName="Events", isData=False, color=color.DY, texName="DY", directory=directories['DYJetsToLL'])
+Top_17              = Sample.fromDirectory(name="Top_17",              treeName="Events", isData=False, color=color.TTJets,        texName="t(#bar{t})",               directory=directories['TTLep_pow'])
 
-sample1 = DYJetsToLL_17
 
-selection = "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0 && Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0 && abs(dl_mass-91.2)<10 && GenMET_pt<10"
+year = int(args.year)
+
+from nanoMET.core.JetResolution import *
+from nanoMET.core.Event         import Event
+
+if year == 2016:
+    JERData     = JetResolution('Summer16_25nsV1_DATA')
+    JERMC       = JetResolution('Summer16_25nsV1_MC')
+    sample1 = DYJetsToLL_16
+elif year == 2017:
+    sample1 = DYJetsToLL_17
+    #sample1 = DoubleMuon_Run2017
+    #sample1 = Top_17
+    JERData     = JetResolution('Fall17_25nsV1_DATA')
+    JERMC       = JetResolution('Fall17_25nsV1_MC')
+
+
+#selection = "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0 && Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0 && abs(dl_mass-91.2)<10"
+selection = "Sum$(Muon_pt>25&&Muon_isGoodMuon)==2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0 && Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)>=0"
+#if not sample1.isData: selection += "&& GenMET_pt<10"
 #selection = "nElectron==0 && nMuon==0 && GenMET_pt<10"
 
 
 ## Sequence
-read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I]", "nJet/I"]
+read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]", "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]", "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"]
+if year == 2017:
+    read_variables += ["METFixEE2017_pt/F", "METFixEE2017_phi/F"]
+if year == 2018:
+    read_variables += ["Jet[pt_nom/F]", "MET_pt_nom/F"]
 
 sequence = []
 
-from nanoMET.core.JetResolution import *
-from nanoMET.core.Event         import Event
-#JERData = JetResolution('Spring16_25nsV6_DATA')
-#JERMC   = JetResolution('Spring16_25nsV6_MC')
-#paramsData  = [1.38, 1.27, 1.22, 1.16, 1.10, 0.0, 0.58]
-#paramsMC    = [1.39, 1.26, 1.21, 1.23, 1.28, -0.26, 0.62]
 
-# 2016 tuning v3
-JERData     = JetResolution('Summer16_25nsV1_DATA')
-JERMC       = JetResolution('Summer16_25nsV1_MC')
-paramsData  = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
-paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+tuneParams = {
+    2016: {
+            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596],
+            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+            },
+    20167: {
+            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.7502485988002288],
+            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.7397929625473758]
+            },
+    2017: {
+            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
+            'mc':   [1.1106319092645605, 1.1016751869920842, 1.0725643000703053, 1.0913641155398053, 1.8499497840145123, -0.0015646588275905911, 0.7397929625473758]
+            },
+    2018: {
+            'data': [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097],
+            'mc':   [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
+            },
+    0: {
+            'data': [0.7,0.7,0.7,0.7,0.7,0.,0.75],
+            'mc':   [0.7,0.7,0.7,0.7,0.7,0.,0.75]
+        },
+    1: {
+            'data': [1.,1.,1.,1.,1.,0.,0.75],
+            'mc':   [1.,1.,1.,1.,1.,0.,0.75]
+        },
+    2: {
+            'data': [1.5, 1.5, 1.5, 1.5, 1.5,0.,0.75],
+            'mc':   [1.5, 1.5, 1.5, 1.5, 1.5,0.,0.75]
+        },
+    3: {
+            'data': [2.,2.,2.,2.,2.,0.,0.75],
+            'mc':   [2.,2.,2.,2.,2.,0.,0.75]
+        },
+    4: {
+            'data': [4.,4.,4.,4.,4.,0.,0.75],
+            'mc':   [4.,4.,4.,4.,4.,0.,0.75]
+        }
+    }
 
-# 2017 tuning v3
-JERData     = JetResolution('Fall17_25nsV1_DATA')
-JERMC       = JetResolution('Fall17_25nsV1_MC')
-paramsData  = []
-paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
+tuneEra = year if not args.tuneEra else int(args.tuneEra)
+
+paramsData  = tuneParams[tuneEra]['data']
+paramsMC    = tuneParams[tuneEra]['mc']
+
+vetoEtaRegion = (2.65, 3.14) if year == False else (10,10)
+jetThreshold = 25 if (year == 2017 or year == 2018) else 15
 
 
 def calcMETSig( event, sample ):
@@ -92,9 +149,31 @@ def calcMETSig( event, sample ):
     else:
         JER = JERMC
         params = paramsMC
-    ev = Event(event, JER, isData=sample.isData)
+    if year == 2017:
+        METPtVar = "METFixEE2017_pt"
+        METPhiVar = "METFixEE2017_phi"
+    elif year == 2018:
+        METPtVar = "MET_pt_nom"
+        METPhiVar = "MET_phi"
+    else:
+        METPtVar = "MET_pt"
+        METPhiVar = "MET_phi"
+    if year == 2018: JetCollection = "Jet_pt_nom"
+    else: JetCollection = "Jet_pt"
+    ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
+    event.Jet_dpt = [ x for x in ev.Jet_dpt ]
+
+#    if sample.isData:
+#        JER = JERData
+#        params = paramsData
+#    else:
+#        JER = JERMC
+#        params = paramsMC
+#    ev = Event(event, JER, isData=sample.isData)
+#    ev.calcMETSig(params)
+#    event.MET_significance_rec = ev.MET_sig
 
 sequence += [ calcMETSig ]
 
@@ -125,7 +204,7 @@ def drawPlots(plots, dataMCScale, objects=None):
   for log in [True, False]:
     ext = "_small" if small else ""
     ext += "_log" if log else ""
-    plot_directory_ = os.path.join(plot_directory, sample1.name + ext)
+    plot_directory_ = os.path.join(plot_directory, args.year, sample1.name + ext)
     for plot in plots:
       if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
       extensions_ = ["pdf", "png", "root"]
