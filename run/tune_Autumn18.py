@@ -35,9 +35,11 @@ sel             = " && ".join([leptonSelection, preselection, trigger, eventfilt
 JR = JetResolution('Autumn18_V1_MC')
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
-r = run([DY_LO_18, Top_18, diboson_18, rare_18], sel, JR, outfile="results/tune_Autumn18_incl_sumPt25_v8", maxN=3*1e5, METPtVar="MET_pt_nom", METPhiVar="MET_phi_nom", JetCollection="Jet_pt_nom", jetThreshold=25.)
+r = run([DY_LO_18, Top_18, diboson_18, rare_18], sel, JR, outfile="results/tune_Autumn18_incl_1p5_puWeight_sumPt15_max25_ttbar5_v8", maxN=3*1e5, METPtVar="MET_pt_nom", METPhiVar="MET_phi_nom", JetCollection="Jet_pt_nom", jetThreshold=15., puWeight='puWeight', ttbarModifier=5.)
 
-LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
+LL = r.getLL( [1.5, 1.5, 1.5, 1.5, 1.5, 0., .5] )
 
-r.minimize()
+start=[1.5, 1.5, 1.5, 1.5, 1.5, 0., .5]
+
+r.minimize(start=start, maxSig=25)
 

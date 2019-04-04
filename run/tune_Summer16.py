@@ -33,9 +33,11 @@ JR = JetResolution('Summer16_25nsV1_MC') # Spring16_25nsV6_MC, Summer16_25nsV1_M
 
 ## only run over max 1M event per sample, uncertainty is anyway low. Need to confirm that the parameters really converged then.
 #DoubleMuon_Run2016.reduceFiles(to=3)
-r = run([DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16], sel, JR, outfile="results/tune_Summer16_incl_v4", maxN=3*1e5)
+r = run([DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16], sel, JR, outfile="results/tune_Summer16_incl_puWeight_sumPt15_max25_v4", maxN=3*1e5, puWeight='puWeight', jetThreshold=15.)
 
-LL = r.getLL( [1.0, 1.0, 1.0, 1.0, 1.0, 0., .5] )
+LL = r.getLL( [1.5, 1.5, 1.5, 1.5, 1.5, 0., .5] )
 
-r.minimize()
+start=[1.5, 1.5, 1.5, 1.5, 1.5, 0., .5]
+
+r.minimize(start=start, maxSig=25)
 

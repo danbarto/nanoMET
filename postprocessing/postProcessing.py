@@ -166,11 +166,13 @@ if year == 2016:
             raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
     else:
         JEC             = "Summer16_07Aug2017_V11_MC"
+    jetThreshold = 15
 
 elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
-    metSigParamsMC      = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
-    metSigParamsData    = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
+    # tuning from April 4th, with sumPt threshold of 25
+    metSigParamsMC      = [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
+    metSigParamsData    = [1.518621014453362, 1.611898248687222, 1.5136936762143423, 1.4878342676980971, 1.9192499533282406, -0.0005835026352392627, 0.749718704693196]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
     if sample.isData:
@@ -178,22 +180,23 @@ elif year == 2017:
             JEC         = "Fall17_17Nov2017B_V32_DATA"
         elif sample.name.count('Run2017C'):
             JEC         = "Fall17_17Nov2017C_V32_DATA"
-        elif sample.name.count('Run2017D'):
-            JEC         = "Fall17_17Nov2017D_V32_DATA"
-        elif sample.name.count('Run2017E'):
-            JEC         = "Fall17_17Nov2017E_V32_DATA"
+        elif sample.name.count('Run2017D') or sample.name.count('Run2017E'):
+            JEC         = "Fall17_17Nov2017DE_V32_DATA"
+        #elif sample.name.count('Run2017E'):
+        #    JEC         = "Fall17_17Nov2017E_V32_DATA"
         elif sample.name.count('Run2017F'):
             JEC         = "Fall17_17Nov2017F_V32_DATA"
         else:
             raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
     else:
         JEC             = "Fall17_17Nov2017_V32_MC"
-    jetmetProducer = jetmetUncertaintiesProducer(str(year), "Fall17_17Nov2017_V32_MC", [ "Total" ], jer="Fall17_V3", jetType = "AK4PFchs", redoJEC=True)
+    jetThreshold = 25
 
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
-    metSigParamsMC      = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
-    metSigParamsData    = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
+    # tuning from April 4th, with sumPt threshold of 25
+    metSigParamsMC      = [1.7694434881425936, 1.7137001302057695, 1.5112562454906482, 1.3947439125146208, 1.484402669821485, 0.00018005935988833766, 0.6924731879249719]
+    metSigParamsData    = [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
     if sample.isData:
@@ -203,18 +206,22 @@ elif year == 2018:
             raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
     else:
         JEC             = "Autumn18_V8_MC"
+    jetThreshold = 25
 
-jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True)
+
+unclEnThreshold=15
+
+jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold)
 
 
 metSigParams            = metSigParamsMC                if not sample.isData else metSigParamsData
 if sample.isData:
     modules = [
+        jetRecalib(JEC, unclEnThreshold=unclEnThreshold),
         METSigTools(),
         lumiWeightProducer(1, isData=True),
-        METSigProducer(JER, metSigParams),
+        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold),
         applyJSON(json),
-        jetRecalib(JEC),
         METminProducer(isData=True),
         # MET significance producer
     ]
@@ -223,10 +230,10 @@ else:
     modules = [
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
-        METSigTools(),
-        METSigProducer(JER, metSigParams),
-        applyJSON(None),
         jetmetProducer,
+        METSigTools(),
+        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True),
+        applyJSON(None),
         METminProducer(isData=False, calcVariations=True),
         # MET significance producer
     ]

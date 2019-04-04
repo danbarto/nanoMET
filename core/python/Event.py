@@ -16,7 +16,7 @@ def cartesian(pt, phi):
     return (pt*math.cos(phi), pt*math.sin(phi))
 
 class Event:
-    def __init__(self, event, jetResolution, weightModifier=1, METPtVar="MET_pt", METPhiVar="MET_phi", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15.):
+    def __init__(self, event, jetResolution, weightModifier=1, METPtVar="MET_pt", METPhiVar="MET_phi", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15., puWeight="puWeight"):
         jetResolution.getJER(event, JetCollection=JetCollection)
 
         self.nJet       = event.nJet
@@ -45,7 +45,7 @@ class Event:
         #self.vetoEtaRegion = vetoEtaRegion # not really nice
 
         self.fixedGridRhoFastjetAll = event.fixedGridRhoFastjetAll
-        self.weight = event.weight * weightModifier if not isData else weightModifier
+        self.weight = event.weight * getattr(event, puWeight) * weightModifier if not isData else weightModifier
 
     def calcLL(self, args):
         # calculate the log likelihood
