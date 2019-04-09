@@ -195,7 +195,7 @@ elif year == 2017:
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
     # tuning from April 4th, with sumPt threshold of 25
-    metSigParamsMC      = [1.7694434881425936, 1.7137001302057695, 1.5112562454906482, 1.3947439125146208, 1.484402669821485, 0.00018005935988833766, 0.6924731879249719]
+    metSigParamsMC      = [1.8430848616315363, 1.8572853766660877, 1.613083160233781, 1.3966398718198898, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
     metSigParamsData    = [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
@@ -209,20 +209,22 @@ elif year == 2018:
     jetThreshold = 25
 
 
-unclEnThreshold=15
+unclEnThreshold = 15
+metSigParams    = metSigParamsMC                if not sample.isData else metSigParamsData
+METCollection   = "METFixEE2017" if year == 2017 else "MET"
 
-jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold)
+jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold, METBranchName=METCollection)
+#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold)
 
 
-metSigParams            = metSigParamsMC                if not sample.isData else metSigParamsData
 if sample.isData:
     modules = [
-        jetRecalib(JEC, unclEnThreshold=unclEnThreshold),
+        jetRecalib(JEC, unclEnThreshold=unclEnThreshold, METBranchName=METCollection),
         METSigTools(),
         lumiWeightProducer(1, isData=True),
-        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold),
+        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection),
         applyJSON(json),
-        METminProducer(isData=True),
+        #METminProducer(isData=True),
         # MET significance producer
     ]
 
@@ -232,9 +234,9 @@ else:
         lumiWeightProducer(lumiScaleFactor),
         jetmetProducer,
         METSigTools(),
-        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True),
+        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection),
         applyJSON(None),
-        METminProducer(isData=False, calcVariations=True),
+        #METminProducer(isData=False, calcVariations=True),
         # MET significance producer
     ]
 

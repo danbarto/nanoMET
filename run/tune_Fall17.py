@@ -44,7 +44,7 @@ JR = JetResolution('Fall17_V3_MC')
 #samples = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
 samples = [DY_LO_17, Top_17]
 #samples = [DY_LO_17]
-r = run(samples, sel, JR, outfile="results/tune_Fall17_FixEE2017_1p5_puWeight_sumPt15_max25_v9", METPtVar="METFixEE2017_pt", METPhiVar="METFixEE2017_phi", maxN=3e5, vetoEtaRegion=(10.,10.), jetThreshold=15., puWeight="puWeight", ttbarModifier=1.)
+r = run(samples, sel, JR, outfile="results/tune_Fall17_FixEE2017_1p5_puWeight_sumPt15_max25_ttbar5_v9", METPtVar="METFixEE2017_pt", METPhiVar="METFixEE2017_phi", maxN=3e5, vetoEtaRegion=(10.,10.), jetThreshold=15., puWeight="puWeight", ttbarModifier=5.)
 
 LL = r.getLL( [1.5, 1.5, 1.5, 1.5, 1.5, 0., .5] )
 

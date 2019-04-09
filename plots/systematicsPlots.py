@@ -35,7 +35,7 @@ argParser.add_argument('--runLocal',             action='store_true',     help='
 argParser.add_argument('--isChild',           action='store_true', default=False)
 argParser.add_argument('--normalizeBinWidth', action='store_true', default=False,       help='normalize wider bins?')
 argParser.add_argument('--dryRun',            action='store_true', default=False,       help='do not launch subjobs')
-argParser.add_argument("--year",              action='store', type=int,      default=2016, choices = [ 2016, 2017 ], help='Which year?')
+argParser.add_argument("--year",              action='store', type=int,      default=2016, choices = [ 2016, 2017, 2018 ], help='Which year?')
 args = argParser.parse_args()
 
 
@@ -132,9 +132,9 @@ if year == 2016:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
 
 elif year == 2017:
-    postProcessing_directory = "2017_v8/dimuon/"
+    postProcessing_directory = "2017_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v8/dimuon/"
+    postProcessing_directory = "2017_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
@@ -143,9 +143,9 @@ elif year == 2017:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
 elif year == 2018:
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18]#, VVTo2L2Nu_18, WJets_18]
@@ -255,9 +255,19 @@ for index, mode in enumerate(allModes):
         sample.style           = styles.fillStyle(sample.color, lineColor = sample.color)
         sample.read_variables  = ["puWeight/F"]
         sample.read_variables += ["%s/F"%s for s in weight_systematics]
-        #sample.read_variables += ["Jet_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_min_%s/F"%s   for s in jet_systematics] ## seems like Jet_pt!!!
-        sample.read_variables += ["MET_pt_%s/F"%s   for s in jet_systematics] + ["MET_pt_min_%s/F"%s    for s in jet_systematics] ## seems like Jet_pt!!!
-        sample.read_variables += ["MET_pt_%s/F"%s   for s in met_systematics] + ["MET_pt_min_%s/F"%s    for s in met_systematics]
+        #sample.read_variables += ["Jet_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_min_%s/F"%s   for s in jet_systematics]
+        if year == 2017:
+            sample.read_variables += ["METFixEE2017_pt_nom/F"]
+            sample.read_variables += ["METFixEE2017_pt_%s/F"%s   for s in jet_systematics]
+            sample.read_variables += ["METFixEE2017_pt_%s/F"%s   for s in met_systematics]
+        else:
+            sample.read_variables += ["MET_pt_nom/F"]
+            sample.read_variables += ["MET_pt_%s/F"%s   for s in jet_systematics]
+            sample.read_variables += ["MET_pt_%s/F"%s   for s in met_systematics]
+        #sample.read_variables += ["MET_pt_%s/F"%s   for s in jet_systematics] + ["MET_pt_min_%s/F"%s    for s in jet_systematics] + ["MET_significance_%s/F"%s    for s in jet_systematics]
+        sample.read_variables += ["MET_significance_%s/F"%s    for s in jet_systematics]
+        sample.read_variables += ["MET_significance_%s/F"%s    for s in met_systematics]
+
         #sample.setWeightString("weight*puWeight")
         #sample.weight = lambda event, sample: event.puWeight
         sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
@@ -271,71 +281,168 @@ for index, mode in enumerate(allModes):
     sys_stacks = {sys:copy.deepcopy(stack_mc) for sys in [None] + weight_systematics + jme_systematics }
     plots = []
   
+
+    if year == 2016 or year == 2018:
+        ## MET_pt
+        if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
+            met_data  = Plot( 
+                name            = "MET_pt_data",
+                texX            = 'E_{T}^{miss} (GeV)', 
+                texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+                stack           = stack_data, 
+                attribute       = TreeVariable.fromString( "MET_pt/F" ),
+                binning         = [20,0,400],
+                selectionString = cutInterpreter.cutString(args.selection),
+                weight          = data_weight,
+                )
+            plots.append( met_data )
+        else:
+            met_data = None
+
+        met_mc = {}
+        for sys in all_systematics:
+            met_mc[sys] = Plot(
+                name            = "MET_pt" if sys is None else "MET_pt_mc_%s" % sys,
+                texX            = 'E_{T}^{miss} (GeV)',
+                texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+                stack           = sys_stacks[sys],
+                attribute       = TreeVariable.fromString('MET_pt/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_%s/F" % sys ),
+                binning         = [20,0,400],
+                selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
+                weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
+                )
+        plots.extend( met_mc.values() )
+
+
+    if year == 2017:
+        ## METFixEE2017_pt
+        if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
+            met_data  = Plot( 
+                name            = "MET_pt_data",
+                texX            = 'E_{T}^{miss} (GeV)', 
+                texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+                stack           = stack_data, 
+                attribute       = TreeVariable.fromString( "METFixEE2017_pt_nom/F" ),
+                binning         = [20,0,400],
+                selectionString = cutInterpreter.cutString(args.selection),
+                weight          = data_weight,
+                )
+            plots.append( met_data )
+        else:
+            met_data = None
+
+        met_mc = {}
+        for sys in all_systematics:
+            met_mc[sys] = Plot(
+                name            = "MET_pt" if sys is None else "MET_pt_mc_%s" % sys,
+                texX            = 'E_{T}^{miss} (GeV)',
+                texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+                stack           = sys_stacks[sys],
+                attribute       = TreeVariable.fromString('METFixEE2017_pt_nom/F') if sys not in jme_systematics else TreeVariable.fromString( "METFixEE2017_pt_%s/F" % sys ),
+                binning         = [20,0,400],
+                selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
+                weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
+                )
+        plots.extend( met_mc.values() )
+
+
+    ## MET_significance
     if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
-        met_data  = Plot( 
-            name            = "MET_pt_data",
-            texX            = 'E_{T}^{miss} (GeV)', 
-            texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+        met_sig_data  = Plot( 
+            name            = "MET_significance_data",
+            texX            = 'S(E_{T}^{miss})', 
+            texY            = 'Number of Events',
             stack           = stack_data, 
-            attribute       = TreeVariable.fromString( "MET_pt/F" ),
-            binning         = [20,0,400],
+            attribute       = TreeVariable.fromString( "MET_significance/F" ),
+            binning         = [20,0,100],
             selectionString = cutInterpreter.cutString(args.selection),
             weight          = data_weight,
             )
-        plots.append( met_data )
+        plots.append( met_sig_data )
     else:
-        met_data = None
+        met_sig_data = None
 
-    met_mc = {}
-
+    met_sig_mc = {}
     for sys in all_systematics:
-        #weight_ = lambda event, sample: int(1)#event.puWeight*event.weight
-        #Plot.setDefaults(weight = "weight*puWeight", addOverFlowBin='upper', histo_class=ROOT.TH1D)
-        met_mc[sys] = Plot(
-            name            = "MET_pt" if sys is None else "MET_pt_mc_%s" % sys,
-            texX            = 'E_{T}^{miss} (GeV)',
-            texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+        met_sig_mc[sys] = Plot(
+            name            = "MET_significance" if sys is None else "MET_significance_mc_%s" % sys,
+            texX            = 'S(E_{T}^{miss})',
+            texY            = 'Number of Events',
             stack           = sys_stacks[sys],
-            attribute       = TreeVariable.fromString('MET_pt/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_%s/F" % sys ),
-            binning         = [20,0,400],
+            attribute       = TreeVariable.fromString('MET_significance/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_significance_%s/F" % sys ),
+            binning         = [20,0,100],
             selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
             weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
             )
-    plots.extend( met_mc.values() )
+    plots.extend( met_sig_mc.values() )
 
+
+    ## MET_significance fine binning
     if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
-        met_min_data  = Plot(
-            name            = "MET_pt_min_data",
-            texX            = 'E_{T}^{miss,min} (GeV)',
-            texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
-            stack           = stack_data,
-            attribute       = TreeVariable.fromString( "MET_pt_min/F" ),
-            binning         = [20,0,400],
+        met_sig_data_fine  = Plot( 
+            name            = "MET_significance_data",
+            texX            = 'S(E_{T}^{miss})', 
+            texY            = 'Number of Events',
+            stack           = stack_data, 
+            attribute       = TreeVariable.fromString( "MET_significance/F" ),
+            binning         = [50,0,100],
             selectionString = cutInterpreter.cutString(args.selection),
             weight          = data_weight,
             )
-        plots.append( met_min_data )
+        plots.append( met_sig_data_fine )
     else:
-        met_min_data = None
+        met_sig_data_fine = None
 
-    met_min_mc = {}
+    met_sig_mc_fine = {}
     for sys in all_systematics:
-        met_min_mc[sys] = Plot(
-            name            = "MET_pt_min" if sys is None else "MET_pt_min_mc_%s" % sys,
-            texX            = 'E_{T}^{miss,min} (GeV)',
-            texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+        met_sig_mc_fine[sys] = Plot(
+            name            = "MET_significance" if sys is None else "MET_significance_mc_%s" % sys,
+            texX            = 'S(E_{T}^{miss})',
+            texY            = 'Number of Events',
             stack           = sys_stacks[sys],
-            attribute       = TreeVariable.fromString('MET_pt_min/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_min_%s/F" % sys ),
-            binning         = [20,0,400],
+            attribute       = TreeVariable.fromString('MET_significance/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_significance_%s/F" % sys ),
+            binning         = [50,0,100],
             selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
             weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
             )
-    plots.extend( met_min_mc.values() )
+    plots.extend( met_sig_mc_fine.values() )
+
+    ### MET_pt_min
+    #if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
+    #    met_min_data  = Plot(
+    #        name            = "MET_pt_min_data",
+    #        texX            = 'E_{T}^{miss,min} (GeV)',
+    #        texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+    #        stack           = stack_data,
+    #        attribute       = TreeVariable.fromString( "MET_pt_min/F" ),
+    #        binning         = [20,0,400],
+    #        selectionString = cutInterpreter.cutString(args.selection),
+    #        weight          = data_weight,
+    #        )
+    #    plots.append( met_min_data )
+    #else:
+    #    met_min_data = None
+
+    #met_min_mc = {}
+    #for sys in all_systematics:
+    #    met_min_mc[sys] = Plot(
+    #        name            = "MET_pt_min" if sys is None else "MET_pt_min_mc_%s" % sys,
+    #        texX            = 'E_{T}^{miss,min} (GeV)',
+    #        texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
+    #        stack           = sys_stacks[sys],
+    #        attribute       = TreeVariable.fromString('MET_pt_min/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_min_%s/F" % sys ),
+    #        binning         = [20,0,400],
+    #        selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
+    #        weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
+    #        )
+    #plots.extend( met_min_mc.values() )
 
 
     plotConfigs = [\
             [ met_mc, met_data, 1],
-            [ met_min_mc, met_min_data, 1],
+            [ met_sig_mc, met_sig_data, 1],
+            [ met_sig_mc_fine, met_sig_data_fine, 1],
+            #[ met_min_mc, met_min_data, 1],
 
     ]
 
