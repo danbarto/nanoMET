@@ -148,7 +148,7 @@ elif year == 2018:
     postProcessing_directory = "2018_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
-    mc          = [DY_LO_18, Top_18]#, VVTo2L2Nu_18, WJets_18]
+    mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
     dy          = DY_LO_18
     top         = Top_18
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
@@ -380,7 +380,7 @@ for index, mode in enumerate(allModes):
     ## MET_significance fine binning
     if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
         met_sig_data_fine  = Plot( 
-            name            = "MET_significance_data",
+            name            = "MET_significance_fine_data",
             texX            = 'S(E_{T}^{miss})', 
             texY            = 'Number of Events',
             stack           = stack_data, 
@@ -396,7 +396,7 @@ for index, mode in enumerate(allModes):
     met_sig_mc_fine = {}
     for sys in all_systematics:
         met_sig_mc_fine[sys] = Plot(
-            name            = "MET_significance" if sys is None else "MET_significance_mc_%s" % sys,
+            name            = "MET_significance_fine" if sys is None else "MET_significance_fine_mc_%s" % sys,
             texX            = 'S(E_{T}^{miss})',
             texY            = 'Number of Events',
             stack           = sys_stacks[sys],

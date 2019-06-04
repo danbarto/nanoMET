@@ -85,6 +85,7 @@ class Event:
             cov_xy += (dpt-dph)*cj*sj
             cov_yy += dph*cj*cj + dpt*sj*sj
             
+
         # unclustered energy
         cov_tt = args[5]*args[5] + args[6]*args[6]*self.MET_sumPt
         cov_xx += cov_tt
@@ -105,7 +106,9 @@ class Event:
         met_x = self.MET_pt * math.cos(self.MET_phi)
         met_y = self.MET_pt * math.sin(self.MET_phi)
 
+
         self.det = det
         self.MET_sig = met_x*met_x*ncov_xx + 2*met_x*met_y*ncov_xy + met_y*met_y*ncov_yy
+
 
 

@@ -31,6 +31,7 @@ argParser.add_argument('--verySmall',           action='store_true',     help='R
 argParser.add_argument('--plot_directory',      action='store',      default='v8_noSigMax')
 argParser.add_argument('--year',                action='store',      default=2016)
 argParser.add_argument('--tuneEra',             action='store',      default=False)
+argParser.add_argument('--dataEra',             action='store',      default=False)
 argParser.add_argument('--jetThreshold',        action='store',      default=False)
 argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ')
 args = argParser.parse_args()
@@ -54,6 +55,7 @@ if args.small:                        args.plot_directory += "_small"
 if args.verySmall:                    args.plot_directory += "_verySmall"
 if args.noData:                       args.plot_directory += "_noData"
 if args.tuneEra:                      args.plot_directory += "_tune%s"%args.tuneEra
+if args.dataEra:                      args.plot_directory += "_data%s"%args.dataEra
 if args.jetThreshold:                 args.plot_directory += "_sumPt%s"%args.jetThreshold
 #
 # Make samples, will be searched for in the postProcessing directory
@@ -122,6 +124,16 @@ tuneParams = {
             'data': [1.9872253856894317, 2.0095601881836114, 1.8827379182057147, 1.5441511389430271, 1.9466310684757857, 0.000664733150619063, 0.6954023820861159],
             'mc':   [1.872048741471656, 1.8053525215738422, 1.7402174815846, 1.5147368230110732, 1.4598266965477382, 0.00039179776585371306, 0.6641545940293803]
             },
+    ## 2017 with higher ttbar importance, sumPt 25, BCDE
+    201710: {
+            'data': [1.5652051127525366, 1.5804471271338907, 1.4862753507081927, 1.5535827934024427, 2.024950815338281, 0.00041900662100602046, 0.7318170819391664],
+            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
+            },
+    ## F
+    201711: {
+            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.7904482365411786],
+            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
+            },
     2018: {
             'data': [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097],
             'mc':   [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
@@ -166,11 +178,15 @@ if year == 2016:
 
 
 elif year == 2017:
-    postProcessing_directory = "2017_v8/dimuon/"
+    postProcessing_directory = "2017_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v8/dimuon/"
+    postProcessing_directory = "2017_v11/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
+    if args.dataEra == 'F':
+        data_sample = DoubleMuon_Run2017F
+    elif args.dataEra == 'BCDE':
+        data_sample = DoubleMuon_Run2017BCDE
     mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
     dy          = DY_LO_17
     top         = Top_17
@@ -1082,7 +1098,7 @@ for index, mode in enumerate(allModes):
     ))
 
   #plotting.fill_with_draw( plots )
-  plotting.fill( plots+plots2D, read_variables = read_variables, sequence = sequence)
+  plotting.fill( plots, read_variables = read_variables, sequence = sequence)
 
   ## other 1D plots
   #print data_sample.selectionString

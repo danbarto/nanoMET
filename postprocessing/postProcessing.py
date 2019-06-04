@@ -225,7 +225,6 @@ if sample.isData:
         METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection),
         applyJSON(json),
         #METminProducer(isData=True),
-        # MET significance producer
     ]
 
 else:
@@ -237,7 +236,6 @@ else:
         METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection),
         applyJSON(None),
         #METminProducer(isData=False, calcVariations=True),
-        # MET significance producer
     ]
 
 logger.info("Preparing post-processor.")
@@ -246,5 +244,4 @@ p = PostProcessor(output_directory,sample.files,cut=cut, modules=modules)
 if not options.prepare:
     logger.info("Running...")
     p.run()
-
 

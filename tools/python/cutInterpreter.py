@@ -26,7 +26,7 @@ special_cuts = {
 
 continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood") ]
 #discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)")]
-discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
+discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("nCleanJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_cleanmask)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
