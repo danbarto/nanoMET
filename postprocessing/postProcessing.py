@@ -11,7 +11,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel       import C
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import Module
 
 # Import modules
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data, pufile_mc, pufile_data2017, pufile_data2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data2016, pufile_mc2016, pufile_data2017, pufile_data2018, pufile_mc2017, pufile_mc2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib                import jetRecalib
@@ -150,7 +150,7 @@ output_directory = os.path.join( directory, options.skim, sample.name )
 logger.info("Loading modules.")
 
 if year == 2016:
-    puwProducer = puWeightProducer(pufile_mc,pufile_data,"pu_mc","pileup",verbose=False)
+    puwProducer = puWeightProducer(pufile_mc2016,pufile_data2016,"pu_mc","pileup",verbose=False)
     metSigParamsMC      = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
     metSigParamsData    = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
     JER                 = "Summer16_25nsV1_MC"          if not sample.isData else "Summer16_25nsV1_DATA"
@@ -213,13 +213,15 @@ unclEnThreshold = 15
 metSigParams    = metSigParamsMC                if not sample.isData else metSigParamsData
 METCollection   = "METFixEE2017" if year == 2017 else "MET"
 
-jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold, METBranchName=METCollection)
+#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jetType = "AK4PFchs", redoJEC=True, METBranchName=METCollection)
+#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold, METBranchName=METCollection)
 #jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold)
 
 
 if sample.isData:
     modules = [
-        jetRecalib(JEC, unclEnThreshold=unclEnThreshold, METBranchName=METCollection),
+        #jetRecalib(JEC, unclEnThreshold=unclEnThreshold, METBranchName=METCollection),
+        jetRecalib(JEC, JEC, METBranchName=METCollection),
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection),
@@ -231,7 +233,8 @@ else:
     modules = [
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
-        jetmetProducer,
+        jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jetType = "AK4PFchs", redoJEC=True, METBranchName=METCollection),
+        #jetmetProducer,
         METSigTools(),
         METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection),
         applyJSON(None),

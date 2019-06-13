@@ -42,10 +42,10 @@
 #python postProcessing.py --skim dimuon --era v11 --year 2017 --samples ZZZ #SPLIT5
 
 
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DoubleMuon_Run2018A_17Sep2018 #SPLIT50
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DoubleMuon_Run2018B_17Sep2018 #SPLIT50
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DoubleMuon_Run2018C_17Sep2018 #SPLIT50
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DoubleMuon_Run2018D_17Sep2018 #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples DoubleMuon_Run2018A_17Sep2018 #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples DoubleMuon_Run2018B_17Sep2018 #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples DoubleMuon_Run2018C_17Sep2018 #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples DoubleMuon_Run2018D_17Sep2018 #SPLIT50
 
 ##python postProcessing.py --skim dimuon-met --era v7 --year 2018 --samples DYJetsToLL_M50_LO #SPLIT200
 ##python postProcessing.py --skim dimuon-met --era v7 --year 2018 --samples TTLep_pow #SPLIT100
@@ -62,13 +62,13 @@ python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DoubleMuo
 ##python postProcessing.py --skim dielectron --era v7 --year 2018 --samples EGamma_Run2018C_17Sep2018 #SPLIT100
 ##python postProcessing.py --skim dielectron --era v7 --year 2018 --samples EGamma_Run2018D_17Sep2018 #SPLIT100
 #
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples DYJetsToLL_M50_LO #SPLIT50
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples TTLep_pow #SPLIT50
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples TToLeptons_sch_amcatnlo #SPLIT20
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples VVTo2L2Nu #SPLIT20
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples T_tWch #SPLIT20
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples TBar_tWch #SPLIT20
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples WZTo3LNu_amcatnlo #SPLIT20
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples WWZ #SPLIT5
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples WZZ #SPLIT5
-python postProcessing.py --skim dimuon --era v11 --year 2018 --samples ZZZ #SPLIT5
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples DYJetsToLL_M50_LO #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples TTLep_pow #SPLIT50
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples TToLeptons_sch_amcatnlo #SPLIT20
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples VVTo2L2Nu #SPLIT20
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples T_tWch #SPLIT20
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples TBar_tWch #SPLIT20
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples WZTo3LNu_amcatnlo #SPLIT20
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples WWZ #SPLIT5
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples WZZ #SPLIT5
+python postProcessing.py --skim dimuon --era v12 --year 2018 --samples ZZZ #SPLIT5
