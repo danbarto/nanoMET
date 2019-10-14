@@ -21,12 +21,13 @@ special_cuts = {
     "allZ":             "(1)",
     "onZ":              "abs(dl_mass-91.1876)<10",
     "offZ":             "abs(dl_mass-91.1876)>10",
-    "BadEEJetveto":     "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>30))==0"
+    "BadEEJetveto":     "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>30))==0",
+    "BadEEJetvetoLow":  "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>15))==0",
   }
 
-continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood") ]
+continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood"), ("nSoftJet", "Sum$(Jet_pt>15&&Jet_pt<30)"), ("sumPt", "MET_sumPt") ]
 #discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)")]
-discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("nCleanJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_cleanmask)"), ("btagA", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4184)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
+discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("nCleanJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_cleanmask)"), ("btagA", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4184&&Jet_cleanmask)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.

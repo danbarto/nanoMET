@@ -55,7 +55,7 @@ logger.info("Starting")
 #
 # Systematics to run over
 #
-jet_systematics    = ['jesTotalUp','jesTotalDown']# 'JERDown','JECVUp','JECVDown']
+jet_systematics    = ['jesTotalUp','jesTotalDown']#, 'jerUp', 'jerDown']# 'JERDown','JECVUp','JECVDown']
 met_systematics    = ['unclustEnUp', 'unclustEnDown']
 jme_systematics    = jet_systematics + met_systematics
 weight_systematics = ['puWeightUp', 'puWeightDown']
@@ -67,6 +67,7 @@ else:                                                       all_systematics = [N
 
 sys_pairs = [\
     ('JES',         'jesTotalUp', 'jesTotalDown'),
+    ('JER',         'jerUp', 'jerDown'),
     ('unclustEn',   'unclustEnUp', 'unclustEnDown'),
     ('puWeight',    'puWeightUp', 'puWeightDown')
 ]
@@ -132,12 +133,12 @@ if year == 2016:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
 
 elif year == 2017:
-    postProcessing_directory = "2017_v11/dimuon/"
+    postProcessing_directory = "2017_v15/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v11/dimuon/"
+    postProcessing_directory = "2017_v15/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
-    mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
+    mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
     dy          = DY_LO_17
     top         = Top_17
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
@@ -240,7 +241,7 @@ for index, mode in enumerate(allModes):
 
     if args.small:
         for sample in mc + [data_sample]:# + ([data_sample] if type(data_sample)!=type([]) else data_sample):
-            sample.reduceFiles( to = 1 )#factor = 40 )
+            sample.reduceFiles( factor = 40 )
 
     #def weightMC2( ):
     #    def func( event, sample ):

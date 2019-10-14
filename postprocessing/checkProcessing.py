@@ -75,6 +75,9 @@ files = glob.glob("%s/*.root"%output_directory)
 
 if len(files) == len(sample.files):
     logger.info("Number of files is correct.")
+else:
+    logger.info("Found %s files, expected %s.", len(files), len(sample.files))
+    logger.info("!!! Missing post-processed files !!!")
 
 nCorrupted = 0
 for f in files:

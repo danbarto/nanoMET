@@ -19,20 +19,24 @@ from nanoMET.core.Likelihood    import minLL
 from nanoMET.tools.progressbar  import update_progress
 from nanoMET.core.JetResolution import JetResolution
 
+def getNVtxWeight( hist, npv ):
+    return hist.GetBinContent(hist.FindBin(npv))
 
 class run:
 
-    def __init__(self, samples, selection, jetResolution, outfile="results/tune", METPtVar='MET_pt', METPhiVar='MET_phi', JetCollection="Jet_pt", maxN=1e6, vetoEtaRegion=(10,10), jetThreshold=15., puWeight="puWeight", ttbarModifier=1):
+    def __init__(self, samples, selection, jetResolution, outfile="results/tune", METPtVar='MET_pt', METPhiVar='MET_phi', JetCollection="Jet_pt", maxN=1e6, vetoEtaRegion=(10,10), jetThreshold=15., puWeight="puWeight", ttbarModifier=1, nvtxHist=None):
         # Need fill a list in order to do the minimization, reading from the tree is too slow
 
         self.eventlist = []
         if samples[0].isData:
             self.variables = map( TreeVariable.fromString,  ['nJet/I', 'fixedGridRhoFastjetAll/F', '%s/F'%METPtVar, '%s/F'%METPhiVar, 'MET_sumPt/F'] )
         else:
-            self.variables = map( TreeVariable.fromString,  ['weight/F', 'puWeight/F', 'puWeightUp/F', 'puWeightDown/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', '%s/F'%METPtVar, '%s/F'%METPhiVar, 'MET_sumPt/F'] )
+            self.variables = map( TreeVariable.fromString,  ['weight/F', 'puWeight/F', 'puWeightUp/F', 'puWeightDown/F', 'nJet/I', 'fixedGridRhoFastjetAll/F', 'PV_npvsGood/I', '%s/F'%METPtVar, '%s/F'%METPhiVar, 'MET_sumPt/F'] )
         self.variables += [VectorTreeVariable.fromString('Jet[pt/F,eta/F,phi/F,cleanmask/O,jetId/I,cleanmaskMETSig/I,cleanmaskMETSigRec/I]' ) ]
         if JetCollection=='Jet_pt_nom':
             self.variables += [VectorTreeVariable.fromString('Jet[pt_nom/F]')]
+        elif JetCollection=='Jet_pt_jerUp':
+            self.variables += [VectorTreeVariable.fromString('Jet[pt_jerUp/F]')]
         self.outfile = outfile
 
         for s in samples:
@@ -60,8 +64,11 @@ class run:
             tmp_eventlist = []
             while reader.run():
                 i+=1
+                nvtxWeight = 1
                 if random.random() < fracToKeep:
-                    tmp_eventlist += [Event(reader.event, jetResolution, weightModifier=weightModifier, isData=s.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold, puWeight=puWeight)]
+                    if nvtxHist:
+                        nvtxWeight = getNVtxWeight(nvtxHist, reader.event.PV_npvsGood)
+                    tmp_eventlist += [Event(reader.event, jetResolution, weightModifier=weightModifier*nvtxWeight, isData=s.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold, puWeight=puWeight)]
                 update_progress(i/nEvents)
             
             print
@@ -78,13 +85,14 @@ class run:
         return LL
 
 
-    def minimize(self, start=[1.0, 1.0, 1.0, 1.0, 1.0, 0., .5], step=[0.05]*7, maxSig = 9):
+    def minimize(self, start=[1.0, 1.0, 1.0, 1.0, 1.0, 0., .5], step=[0.05]*12, maxSig = 9): # changed 7 --> 12
         gmin = ROOT.Math.Factory.CreateMinimizer("Minuit2")
         gmin.SetTolerance(10.0)
         gmin.SetStrategy(0)
         gmin.SetPrintLevel(3)
         
-        variable  = ['a1','a2','a3','a4','a5','u1','u2']
+        #variable  = ['a1','a2','a3','a4','a5','u1','u2']
+        variable  = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','u1','u2']
         step  = step
         start = start
 
@@ -96,7 +104,7 @@ class run:
         print 'With stepsize of', step
         print 'And starting values', start
     
-        for i in range(0,7):
+        for i in range(0,12): # 7 --> 12
             gmin.SetVariable(i,variable[i],start[i], step[i])
     
         gmin.Minimize()
@@ -112,8 +120,8 @@ class run:
         gmin.Minimize()
         gmin.Hesse()
         
-        pars = [gmin.X()[i] for i in range(0,7)]
-        uncs = [gmin.Errors()[i] for i in range(0,7)]
+        pars = [gmin.X()[i] for i in range(0,12)] # 7 --> 12
+        uncs = [gmin.Errors()[i] for i in range(0,12)] # 7 --> 12
         
         with open(self.outfile+'.txt', 'w') as of:
             json.dump(pars, of)

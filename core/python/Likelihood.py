@@ -5,7 +5,7 @@ class minLL( ROOT.TPyMultiGenFunction ):
         ROOT.TPyMultiGenFunction.__init__( self, self )
         self.evlist = evlist
     def NDim( self ):
-        return 7
+        return 12 # changed from 7 --> 12
 
     def DoEval( self, args ):
         LL = self.evlist.getLL(args)

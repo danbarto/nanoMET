@@ -3,6 +3,7 @@ Post-processing based on nanoAOD tools
 '''
 
 import os
+import ROOT
 
 # Import tools
 from importlib import import_module
@@ -29,6 +30,7 @@ argParser.add_argument('--skim',        action='store', nargs='?', type=str, def
 argParser.add_argument('--job',         action='store', type=int, default=0, help="Run only jobs i" )
 argParser.add_argument('--nJobs',       action='store', nargs='?', type=int,default=1, help="Maximum number of simultaneous jobs.")
 argParser.add_argument('--prepare',     action='store_true', help="Prepare, don't acutally run" )
+argParser.add_argument('--overwrite',   action='store_true', help="Overwrite" )
 argParser.add_argument('--year',        action='store', default=None, help="Which year? Important for json file.")
 argParser.add_argument('--era',         action='store', default="v1", help="Which era/subdirectory?")
 options = argParser.parse_args()
@@ -38,6 +40,16 @@ logger = _logger.get_logger(options.logLevel, logFile = None)
 
 # from RootTools
 from RootTools.core.standard            import *
+
+def nonEmptyFile(f, treeName='Events'):
+    print "Checking file: %s"%f
+    rf = ROOT.TFile.Open(f)
+    if not rf: return False
+    tree = getattr(rf, treeName)
+    nonEmpty = True if tree.GetEntries() else False
+    if not nonEmpty: print "File is empty"
+    rf.Close()
+    return nonEmpty
 
 def extractEra(sampleName):
     return sampleName[sampleName.find("Run"):sampleName.find("Run")+len('Run2000A')]
@@ -88,7 +100,7 @@ elif len(samples)==1:
 else:
     raise ValueError( "Need at least one sample. Got %r",samples )
 
-logger.info("Sample contains %s files", len(sample.files))
+#logger.info("Sample contains %s files", len(sample.files))
 sample.files = sorted(sample.files) # in order to avoid some random ordered file list, different in each job
 
 if sample.isData:
@@ -108,13 +120,13 @@ keepSampleName = sample.name # to mitigate Mateusz change of naming convention
 
 # filebased job splitting
 len_orig = len(sample.files)
-logger.info("Sample has %s files", len_orig)
+#logger.info("Sample has %s files", len_orig)
 json = sample.json # pickup json from sample, as defined in the Sample repository
 sample = sample.split( n=options.nJobs, nSub=options.job)
 sample.name = keepSampleName
 
 logger.info("Will run over %s files", len(sample.files))
-logger.info("Running over files %s", sample.files)
+#logger.info("Running over files %s", sample.files)
 
 # Put together skim
 isDiMuon        = options.skim.lower().startswith('dimuon')
@@ -147,15 +159,45 @@ logger.info("Using selection: %s", cut)
 directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/%s_%s/"%(options.year, options.era)
 output_directory = os.path.join( directory, options.skim, sample.name )
 
+fileNames = [ ('/'.join(x.split('/')[:-1]), x.split('/')[-1]) for x in sample.files if nonEmptyFile(x)  ]
+
+if not options.overwrite:
+    allFiles = []
+    for f in fileNames:
+        outfile = f[1].replace('.root','_Skim.root')
+        if os.path.isfile(output_directory+'/'+outfile):
+            try:
+                a = helpers.checkRootFile(output_directory+'/'+outfile)
+                if a:
+                    logger.info('Found file %s, skipping.', outfile)
+                    continue
+                else:
+                    logger.info("Found file %s, but need to rerun.", outfile)
+                    allFiles.append(f)
+            except:
+                logger.info("Found file %s, but need to rerun.", outfile)
+                allFiles.append(f)
+        else:
+            logger.info('No files found for %s, will produce them', outfile)
+            allFiles.append(f)
+else:
+    allFiles = fileNames
+        
+
+
+sample.files = [ f[0] + '/' + f[1] for f in allFiles ]
+
 logger.info("Loading modules.")
 
 if year == 2016:
     puwProducer = puWeightProducer(pufile_mc2016,pufile_data2016,"pu_mc","pileup",verbose=False)
-    metSigParamsMC      = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
-    metSigParamsData    = [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
+    metSigParamsMC      = [1.617529475909303, 1.617529475909303, 1.4505983036866312, 1.4505983036866312, 1.411498565372343, 1.411498565372343, 1.4087559908291813, 1.4087559908291813, 1.3633674107893856, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
+    metSigParamsData    = [1.843242937068234, 1.843242937068234, 1.64107911184195,   1.64107911184195,   1.567040591823117, 1.567040591823117, 1.5077143780804294, 1.5077143780804294, 1.614014783345394,  1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
     JER                 = "Summer16_25nsV1_MC"          if not sample.isData else "Summer16_25nsV1_DATA"
-    JERera              = "Fall17_V3"
+    JERera              = "Summer16_25nsV1"
+    archive             = ''
     if sample.isData:
+        archive = "Summer16_07Aug2017_V11_DATA"
         if sample.name.count("Run2016B") or sample.name.count("Run2016C") or sample.name.count("Run2016D"):
             JEC         = "Summer16_07Aug2017BCD_V11_DATA"
         elif sample.name.count("Run2016E") or sample.name.count("Run2016F"):
@@ -170,42 +212,44 @@ if year == 2016:
 
 elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
-    # tuning from April 4th, with sumPt threshold of 25
-    metSigParamsMC      = [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-    metSigParamsData    = [1.518621014453362, 1.611898248687222, 1.5136936762143423, 1.4878342676980971, 1.9192499533282406, -0.0005835026352392627, 0.749718704693196]
+    # tuning from June 24th, with sumPt threshold of 15
+    metSigParamsMC      = [1.9648214119268503, 1.5343086462230238, 1.9167197601498538, 1.5145044341064964, 1.8069380221985405, 1.3217263662622654, 1.5506294867561126, 1.272977540964842,  1.50742322311234,   1.6542883449796797, -0.0017865650107230548,  0.6593106706741719]
+    metSigParamsData    = [2.228118299837604,  1.2420725475347338, 2.227630982417529,  1.256752205787215,  2.0215250734187853, 1.1557507029911258, 1.7350536144535336, 1.1587692458345757, 1.9385081854607988, 1.8726188460472792, -2.6697894266706265e-05, 0.646984812801919]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     JERera              = "Fall17_V3"
+    archive             = ''
     if sample.isData:
+        archive = "Fall17_17Nov2017_V32_DATA"
         if sample.name.count('Run2017B'):
             JEC         = "Fall17_17Nov2017B_V32_DATA"
         elif sample.name.count('Run2017C'):
             JEC         = "Fall17_17Nov2017C_V32_DATA"
         elif sample.name.count('Run2017D') or sample.name.count('Run2017E'):
             JEC         = "Fall17_17Nov2017DE_V32_DATA"
-        #elif sample.name.count('Run2017E'):
-        #    JEC         = "Fall17_17Nov2017E_V32_DATA"
         elif sample.name.count('Run2017F'):
             JEC         = "Fall17_17Nov2017F_V32_DATA"
         else:
             raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
     else:
         JEC             = "Fall17_17Nov2017_V32_MC"
-    jetThreshold = 25
+    jetThreshold = 15
 
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
     # tuning from April 4th, with sumPt threshold of 25
-    metSigParamsMC      = [1.8430848616315363, 1.8572853766660877, 1.613083160233781, 1.3966398718198898, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
-    metSigParamsData    = [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575]
-    JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
-    JERera              = "Fall17_V3"
+    metSigParamsMC      = [1.8430848616315363, 1.8430848616315363, 1.8572853766660877, 1.8572853766660877, 1.613083160233781,  1.613083160233781,  1.3966398718198898, 1.3966398718198898, 1.4831008506492056, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
+    metSigParamsData    = [1.6231076732985186, 1.6231076732985186, 1.615595174619551,  1.615595174619551,  1.4731794897915416, 1.4731794897915416, 1.5183631493937553, 1.5183631493937553, 2.145670387603659,  2.145670387603659, -0.0001524158603362826, 0.7510574688006575]
+    JER                 = "Autumn18_V7_MC"                if not sample.isData else "Autumn18_V7_DATA"
+    JERera              = "Autumn18_V7"
+    archive             = ''
     if sample.isData:
+        archive = "Autumn18_V19_DATA"
         if sample.name.count("Run2018"):
-            JEC         = "Autumn18_Run%s_V8_DATA"%era
+            JEC         = "Autumn18_Run%s_V19_DATA"%era
         else:
             raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
     else:
-        JEC             = "Autumn18_V8_MC"
+        JEC             = "Autumn18_V19_MC"
     jetThreshold = 25
 
 
@@ -213,18 +257,17 @@ unclEnThreshold = 15
 metSigParams    = metSigParamsMC                if not sample.isData else metSigParamsData
 METCollection   = "METFixEE2017" if year == 2017 else "MET"
 
-#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jetType = "AK4PFchs", redoJEC=True, METBranchName=METCollection)
-#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold, METBranchName=METCollection)
-#jetmetProducer = jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jer=JERera, jetType = "AK4PFchs", redoJEC=True, unclEnThreshold=unclEnThreshold)
+vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
 
+print vetoEtaRegion
 
 if sample.isData:
     modules = [
-        #jetRecalib(JEC, unclEnThreshold=unclEnThreshold, METBranchName=METCollection),
-        jetRecalib(JEC, JEC, METBranchName=METCollection),
+        #jetRecalib(JEC, JEC, METBranchName=METCollection),
+        jetmetUncertaintiesProducer(str(year), JEC, archive=archive, jesUncertainties=[ "Total" ], jetType = "AK4PFchs", redoJEC=True, metBranchName=METCollection, isData=True),
         METSigTools(),
         lumiWeightProducer(1, isData=True),
-        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection),
+        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
         applyJSON(json),
         #METminProducer(isData=True),
     ]
@@ -233,10 +276,10 @@ else:
     modules = [
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
-        jetmetUncertaintiesProducer(str(year), JEC, [ "Total" ], jetType = "AK4PFchs", redoJEC=True, METBranchName=METCollection),
+        jetmetUncertaintiesProducer(str(year), JEC, jesUncertainties=[ "Total" ], jetType = "AK4PFchs", redoJEC=True, metBranchName=METCollection),
         #jetmetProducer,
         METSigTools(),
-        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection),
+        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
         applyJSON(None),
         #METminProducer(isData=False, calcVariations=True),
     ]
@@ -245,6 +288,6 @@ logger.info("Preparing post-processor.")
 
 p = PostProcessor(output_directory,sample.files,cut=cut, modules=modules)
 if not options.prepare:
-    logger.info("Running...")
+    logger.info("Running ... ")
     p.run()
 

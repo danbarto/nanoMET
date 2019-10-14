@@ -28,7 +28,11 @@ argParser.add_argument('--noData',              action='store_true', default=Fal
 argParser.add_argument('--small',               action='store_true',     help='Run only on a small subset of the data?', )
 argParser.add_argument('--calcMETSig',          action='store_true',     help='Calculate MET Significance?', )
 argParser.add_argument('--verySmall',           action='store_true',     help='Run only on a small subset of the data?', )
-argParser.add_argument('--plot_directory',      action='store',      default='v8_noSigMax')
+argParser.add_argument('--normalize',           action='store_true',     help='Normalize MC to data?', )
+argParser.add_argument('--reweightSoftJets',    action='store_true',     help='?', )
+argParser.add_argument('--PUup',                action='store_true',     help='?', )
+argParser.add_argument('--test',                action='store_true',     help='?', )
+argParser.add_argument('--plot_directory',      action='store',      default='v13_noSigMax')
 argParser.add_argument('--year',                action='store',      default=2016)
 argParser.add_argument('--tuneEra',             action='store',      default=False)
 argParser.add_argument('--dataEra',             action='store',      default=False)
@@ -36,6 +40,7 @@ argParser.add_argument('--jetThreshold',        action='store',      default=Fal
 argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ')
 args = argParser.parse_args()
 
+testSample = Sample.fromFiles('test', ['/afs/hephy.at/data/dspitzbart03/nanoSamples/2017_v14/dimuon/DoubleMuon_Run2017B_31Mar2018/nanoAOD_10_Skim.root'])
 
 
 year = int(args.year)
@@ -51,6 +56,8 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 from nanoMET.core.JetResolution import *
 from nanoMET.core.Event         import Event
 
+if args.reweightSoftJets:             args.plot_directory += "_reweightSoftJets"
+if args.PUup:                         args.plot_directory += "_PUup"
 if args.small:                        args.plot_directory += "_small"
 if args.verySmall:                    args.plot_directory += "_verySmall"
 if args.noData:                       args.plot_directory += "_noData"
@@ -61,171 +68,7 @@ if args.jetThreshold:                 args.plot_directory += "_sumPt%s"%args.jet
 # Make samples, will be searched for in the postProcessing directory
 #
 
-tuneParams = {
-    2016: { 
-            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596],
-            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
-            },
-    ## 2016 with pu weights used in mc ##
-    20165: { 
-            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.6071479349467596],
-            'mc':   [1.6011227423219039, 1.5066324019064243, 1.39522684260459, 1.4609472920050623, 1.3525451391752066, -0.0006251698184290728, 0.6534036946645546]
-            },
-    20167: { 
-            'data': [1.843242937068234, 1.64107911184195, 1.567040591823117, 1.5077143780804294, 1.614014783345394, -0.0005986196920895609, 0.7502485988002288],
-            'mc':   [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.7397929625473758]
-            },
-    # sumPt 25
-    20168: {
-            'data': [1.6421540722123815, 1.4703540994170974, 1.370672790290806, 1.3794989841455065, 1.8490363050489667, 0.00031239952995576296, 0.6754041330790614],
-            'mc':   [1.4317042113521112, 1.418446363930865, 1.2458434390868454, 1.4183822650990032, 1.555642420526111, 0.0034659846066426026, 0.7078128381714376]
-            },
-    2017: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [1.1106319092645605, 1.1016751869920842, 1.0725643000703053, 1.0913641155398053, 1.8499497840145123, -0.0015646588275905911, 0.7397929625473758]
-            },
-    20171: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [0.9*1.5622, 0.9*1.540194, 0.9*1.566197, 0.9*1.513250, 0.9*1.939894, -0.0015646588275905911, 0.7397929625473758]
-            },
-    20172: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [0.95*1.5622, 0.95*1.540194, 0.95*1.566197, 0.95*1.513250, 0.95*1.939894, -0.0015646588275905911, 0.7397929625473758]
-            },
-    20173: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.0015646588275905911, 0.7397929625473758]
-            },
-    20174: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [1.1*1.5622583144490318, 1.1*1.540194388842639, 1.1*1.566197393467264, 1.1*1.5132500586113067, 1.1*1.9398948489956538, -0.0015646588275905911, 0.7397929625473758]
-            },
-    ## 2017 with pu weights used in mc ##
-    20175: {
-            'data': [1.7730813823231537, 1.821843516974601, 1.7689214576485417, 1.6258919385880275, 1.3727803298684411, -1.2818765631461603e-05, 0.6516467577087568],
-            'mc':   [1.4378763459984059, 1.4084171919184096, 1.514120414464013, 1.367888183696082, 1.3920486791863427, 0.004370971021822618, 0.6474905606844567]
-            },
-    20176: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [1.47103, 1.34322, 1.32917, 1.30214, 2.05267, -0.00348806, 0.728329]
-            },
-    ## 2017 with higher ttbar importance 4 ##
-    20177: {
-            'data': [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288],
-            'mc':   [1.5540980452293518, 1.619567660177374, 1.4753739992939443, 1.483536636817442, 2.0919959883726915, -0.0003838685708609864, 0.7286551592297645]
-            },
-    ## 2017 with higher ttbar importance 5 ##
-    20178: {
-            'data': [1.518621014453362, 1.611898248687222, 1.5136936762143423, 1.4878342676980971, 1.9192499533282406, -0.0005835026352392627, 0.749718704693196],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## 2017 with higher ttbar importance, sumPt 15
-    20179: {
-            'data': [1.9872253856894317, 2.0095601881836114, 1.8827379182057147, 1.5441511389430271, 1.9466310684757857, 0.000664733150619063, 0.6954023820861159],
-            'mc':   [1.872048741471656, 1.8053525215738422, 1.7402174815846, 1.5147368230110732, 1.4598266965477382, 0.00039179776585371306, 0.6641545940293803]
-            },
-    ## 2017 with higher ttbar importance, sumPt 25, BCDE
-    201710: {
-            'data': [1.5652051127525366, 1.5804471271338907, 1.4862753507081927, 1.5535827934024427, 2.024950815338281, 0.00041900662100602046, 0.7318170819391664],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F
-    201711: {
-            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.7904482365411786],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F njet>1
-    201712: {
-            'data': [0.993651906633033, 1.0944966268780696, 0.9914474691821226, 0.7984705554956626, 1.6344270079705807, -0.016477374854175372, 0.8819597158822381],
-            #'mc':   [1.6045737040134898, 1.5532697538597484, 1.442995983663496, 1.2604330833498492, 1.402690881022848, -6.410300713504684, 0.7659392311035692]
-            'mc':   [1.5618622107367863, 1.5376130512216604, 1.3801485311789565, 1.2067713870538523, 1.9616673491325636, -0.07996701778841991, 0.8429924279893956]
-            },
-    ## F, cheating with sumPt part
-    201713: {
-            #'data': [1.5452623899161342, 1.5539637338134675, 1.564421007649702, 1.4813537637017322, 1.7426631937813, -0.00011789590917172946, 0.7810080077485776]
-            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.75],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F, EE veto for data, 1+ jets for data
-    201714: {
-            'data': [1.136558810039792, 1.206371159674286, 1.208887233417822, 1.0946049055128653, 1.6965392213075532, -0.001666209368289994, 0.8223768190797647],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F, EE veto for data, 2+ jets for data
-    201715: {
-            'data': [1.09703031229057, 1.1829972037197771, 1.1266483830754903, 0.9631530399910013, 1.7072728190162518, 0.0013100381022607757, 0.8547152502683749],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F, cheating with sumPt part
-    201716: {
-            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.65],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F, mc tuning with no importance scaling for ttbar
-    201717: {
-            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.7904482365411786],
-            'mc':   [1.218879975427974, 1.2868246191707022, 1.2674356691680915, 1.2158652226456104, 2.0790345532097327, 0.0003839323448207978, 0.727242595186211]
-            },
-    ## F, cheating with sumPt part
-    201718: {
-            'data': [1.4903886050473685, 1.6552347847889408, 1.5375539513889926, 1.5191557344959805, 1.677028876500211, 0.00036790289207031587, 0.68],
-            'mc':   [1.7760438537732681, 1.720421230892687, 1.6034765551361112, 1.5336832981702226, 2.0928447254019757, 0.0011228025809342157, 0.7287313412909979]
-            },
-    ## F, new tuning
-    201719: {
-            'data': [1.5452623899161342, 1.5539637338134675, 1.564421007649702, 1.4813537637017322, 1.7426631937813, -0.00011789590917172946, 0.7810080077485776],
-            'mc':   [1.1773001341555875, 1.1950711343012776, 1.3279865216292432, 1.1086749770829674, 1.8876655384561505, 0.0022960530702916763, 0.7272132154517313]
-            },
-    ## F, new tuning, changing central jet parameters
-    201720: {
-            'data': [1.1452623899161342, 1.1539637338134675, 1.364421007649702, 1.1813537637017322, 1.7426631937813, -0.00011789590917172946, 0.7810080077485776],
-            'mc':   [1.1773001341555875, 1.1950711343012776, 1.3279865216292432, 1.1086749770829674, 1.8876655384561505, 0.0022960530702916763, 0.7272132154517313]
-            },
-    ## F, new tuning, changing central jet parameters, MC with ttbar x 5
-    201721: {
-            'data': [1.1452623899161342, 1.1539637338134675, 1.364421007649702, 1.1813537637017322, 1.7426631937813, -0.00011789590917172946, 0.7810080077485776],
-            'mc':   [1.7367017959715492, 1.6306580873006113, 1.4976050201945497, 1.4439784859805873, 1.8882555125126717, 0.002776902402096613, 0.7280864932997622]
-            },
-
-    ######### 2018 ########
-    2018: {
-            'data': [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097],
-            'mc':   [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
-            },
-    ## 2018 with pu weights used in mc ##
-    20185: {
-            'data': [1.8368013628479065, 1.9290201989862157, 1.8259539414492025, 1.5333110456125958, 1.7691679140127663, -0.0007978172145023804, 0.6822519604496338],
-            'mc':   [1.4093490421560217, 1.4191226065389828, 1.3724179422270846, 1.208801667574729, 1.1397193305531983, 0.004263614766723784, 0.6296536597674177]
-            },
-    ## 2018 with pu weights used in mc, ttbar5 ##
-    20188: {
-            'data': [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575],
-            'mc':   [1.7694434881425936, 1.7137001302057695, 1.5112562454906482, 1.3947439125146208, 1.484402669821485, 0.00018005935988833766, 0.6924731879249719]
-            },
-
-    ## 2018 with pu weights used in mc, ttbar6 ##
-    20189: {
-            'data': [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575],
-            'mc':   [1.8430848616315363, 1.8572853766660877, 1.613083160233781, 1.3966398718198898, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
-            },
-    ## 2018 with pu weights used in mc, ttbar6, JER smearing. whatever changed in data? ##
-    201810: {
-            'data': [1.4698510928845903, 1.6274969872662128, 1.4401026396007923, 1.3066363203359852, 1.9626614559348625, 0.0003847902120762913, 0.7511670653138974],
-            'mc':   [2.0125792791161086, 1.907019584601178, 1.691418568871399, 1.8522963629751756, 2.5811948493039836, 0.0013040694868296128, 0.6944381179120537]
-                    #[1.8430848616315363, 1.8572853766660877, 1.613083160233781, 1.3966398718198898, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
-            },
-    ## 2018 with pu weights used in mc, ttbar6, JER smearing. whatever changed in data? ##
-    201811: {
-            'data': [1.6231076732985186, 1.615595174619551, 1.4731794897915416, 1.5183631493937553, 2.145670387603659, -0.0001524158603362826, 0.7510574688006575],
-            'mc':   [2.0125792791161086, 1.907019584601178, 1.691418568871399, 1.8522963629751756, 2.5811948493039836, 0.0013040694868296128, 0.6944381179120537]
-                    #[1.8430848616315363, 1.8572853766660877, 1.613083160233781, 1.3966398718198898, 1.4831008506492056, 0.0011310724285762122, 0.6929410058142578]
-            },
-    ## 2018 with  JER
-    201812: {
-            'data': [1.4698510928845903, 1.6274969872662128, 1.4401026396007923, 1.3066363203359852, 1.9626614559348625, 0.0003847902120762913, 0.7511670653138974],
-            'mc':   [2.0125792791161086, 1.907019584601178, 1.691418568871399, 1.8522963629751756, 2.5811948493039836, 0.0013040694868296128, 0.6944381179120537]
-            }
-    }
+from tunes import tuneParams
 
 tuneEra = year if not args.tuneEra else int(args.tuneEra)
 
@@ -249,51 +92,33 @@ if year == 2016:
 
 
 elif year == 2017:
-    postProcessing_directory = "2017_v11/dimuon/"
+    postProcessing_directory = "2017_v15/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v11/dimuon/"
+    postProcessing_directory = "2017_v15/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     if args.dataEra == 'F':
         data_sample = DoubleMuon_Run2017F
     elif args.dataEra == 'BCDE':
         data_sample = DoubleMuon_Run2017BCDE
-    mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
+    mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
     dy          = DY_LO_17
     top         = Top_17
-    vv          = VVTo2L2Nu_17
+    vv          = diboson_17
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
-    JERData     = JetResolution('Fall17_25nsV1_DATA')
-    JERMC       = JetResolution('Fall17_25nsV1_MC')
+    JERData     = JetResolution('Fall17_V3_DATA')
+    JERMC       = JetResolution('Fall17_V3_MC')
 
-## sumPt with jets < 25 in tune
-#    paramsData  = [1.5622583144490318, 1.540194388842639, 1.566197393467264, 1.5132500586113067, 1.9398948489956538, -0.00028476818675941427, 0.7502485988002288]
-#    paramsMC    = [1.1106319092645605, 1.1016751869920842, 1.0725643000703053, 1.0913641155398053, 1.8499497840145123, -0.0015646588275905911, 0.7397929625473758]
-#
-### no EE jets in METSig (and tuning)
-#    #paramsData  = [1.957222895585727, 1.9729235168459986, 1.90948681548405, 1.6360930500389212, 1.4258381193442973, 0.0004736982371569354, 0.6723294208092309]
-#    paramsData  = [2.0563574969195284, 2.0350922422571185, 1.9679260575496922, 1.8131965623423398, 2.0514491151904264, 0.00038779929766834373, 0.7000316076675241]
-#    #paramsMC    = [1.2241980571984066, 1.1869013615009936, 1.2102170428976644, 1.2081321118729322, 1.3823907717329618, -0.39694728791067135, 0.6841860339541063] # probably wrong
-#    paramsMC    = [1.2555429763964476, 1.1731433624038419, 1.2492796035979699, 1.2065137002881199, 1.4168482891432284, -0.5544468130563261, 0.7136789915805164]
-
-### no sig max in tuning
-#    paramsData  = [1.966462143930697, 1.937183271447419, 1.8657691786964459, 1.6690843411711644, 1.4288816064105585, -0.00040472779927774936, 0.6722445090422673]
-#    paramsMC    = [1.215607616120827, 1.2063625156082602, 1.2306271643996056, 1.2462203247952433, 1.393142812137987, 0.009617412335929804, 0.6826006402909576]
-
-## EE Fix tuning
-#    paramsData  = [1.8203205027930778, 1.831631046506774, 1.7677237626986682, 1.5918292402822833, 1.367835925196143, -0.00019188634750270158, 0.6536545242198241]
-#    paramsMC    = [0.9407084182022997, 0.9523526365256799, 1.0575730226561166, 1.172357726178777, 1.322739950549703, -0.006175237894865501, 0.6658458528486568]
-
-## old tuning
-#    paramsData  = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
-#    paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
-    
 elif year == 2018:
-    postProcessing_directory = "2018_v12/dimuon/"
+    postProcessing_directory = "2018_v19/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v12/dimuon/"
+    postProcessing_directory = "2018_v19/dimuon/" #v11 are the old ones without JER
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
+    #postProcessing_directory = "2018_v11/dimuon/"
+    #from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
+    #postProcessing_directory = "2018_v11/dimuon/" #v11 are the old ones without JER
+    #from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18, diboson_18, rare_18]#, WJets_18]
     dy          = DY_LO_18
@@ -304,13 +129,11 @@ elif year == 2018:
     JERData     = JetResolution('Autumn18_V1_DATA')
     JERMC       = JetResolution('Autumn18_V1_MC')
 
-#    paramsData  = [1.4416589250258958, 1.592549070456071, 1.400707548171599, 1.4213958262324593, 2.0868635081187348, -0.0007745499117034968, 0.7261267509272097]
-#    paramsMC    = [1.0117455874431338, 1.2986232760320007, 1.1414800394963855, 0.9209396460085367, 1.312067503147174, 0.0012299929784571964, 0.681951027334837]
-## old tunes
-#    #paramsData  = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
-#    paramsData  = [1.8368013628479065, 1.9290201989862157, 1.8259539414492025, 1.5333110456125958, 1.7691679140127663, -0.0007978172145023804, 0.6822519604496338]
-#    #paramsMC    = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
-#    paramsMC    = [1.3064958924256105, 1.3928299525663819, 1.3244074093077896, 1.2590854555163649, 1.0826747081096033, 0.007648950323072088, 0.6283900186403472]
+if args.test:
+    data_sample = testSample
+    data_sample.lumi = 1
+    mc          = [testSample]
+    
 
 #
 # Text on the plots
@@ -324,7 +147,6 @@ def drawObjects( plotData, dataMCScale, lumi_scale ):
       (0.15, 0.95, 'CMS Preliminary' if plotData else 'CMS Simulation'), 
       (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV) Scale %3.2f'% ( lumi_scale, dataMCScale ) ) if plotData else (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale)
     ]
-    if "mt2ll100" in args.selection and args.noData: lines += [(0.55, 0.5, 'M_{T2}(ll) > 100 GeV')] # Manually put the mt2ll > 100 GeV label
     return [tex.DrawLatex(*l) for l in lines] 
 
 def drawPlots(plots, mode, dataMCScale):
@@ -341,7 +163,7 @@ def drawPlots(plots, mode, dataMCScale):
 	    ratio = {'yRange':(0.1,1.9)} if not args.noData else None,
 	    logX = False, logY = log, sorting = True,
 	    yRange = (0.03, "auto") if log else (0.001, "auto"),
-	    scaling = {},
+	    scaling = {0:1} if args.normalize else {},
 	    legend = (0.50,0.88-0.04*sum(map(len, plot.histos)),0.9,0.88) if not args.noData else (0.50,0.9-0.047*sum(map(len, plot.histos)),0.85,0.9),
 	    drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
         copyIndexPHP = True,
@@ -351,8 +173,12 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 #
 read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]", "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]", "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"]
+if year == 2018 or year == 2017:
+    read_variables += ["Jet[pt_nom/F]"]
 if year == 2018:
-    read_variables += ["Jet[pt_nom/F]", "MET_pt_nom/F"]
+    read_variables += ["MET_pt_nom/F", "MET_phi_nom/F"]
+if year == 2017:
+    read_variables += ["METFixEE2017_pt_nom/F", "METFixEE2017_phi_nom/F"]
 #read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F]", "nJet/I"]
 
 #read_variables += ["Electron[pt/F,eta/F,phi/F,pfRelIso03_all/F]", "dl_mass/F", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8/O", "HLT_IsoMu24/O"]
@@ -361,7 +187,8 @@ if year == 2018:
 
 sequence = []
 
-vetoEtaRegion = (2.65, 3.14) if year == False else (10,10)
+vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
+#if args.test: vetoEtaRegion = (10,10)
 jetThreshold = 25 if (year == 2017 or year == 2018) else 15
 if args.jetThreshold: jetThreshold = float(args.jetThreshold)
 
@@ -374,20 +201,24 @@ def calcMETSig( event, sample ):
         JER = JERMC
         params = paramsMC
     if year == 2017:
-        METPtVar = "METFixEE2017_pt"
-        METPhiVar = "METFixEE2017_phi"
+        METPtVar = "METFixEE2017_pt_nom"
+        METPhiVar = "METFixEE2017_phi_nom"
+        #METPtVar = "MET_pt"
+        #METPhiVar = "MET_phi"
     elif year == 2018:
         METPtVar = "MET_pt_nom"
-        METPhiVar = "MET_phi"
+        METPhiVar = "MET_phi_nom"
     else:
         METPtVar = "MET_pt"
         METPhiVar = "MET_phi"
-    if year == 2018: JetCollection = "Jet_pt_nom"
+    if year == 2018 or year ==2017: JetCollection = "Jet_pt_nom"
     else: JetCollection = "Jet_pt"
     ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
-    event.Jet_dpt = [ x for x in ev.Jet_dpt ]
+    if args.test:
+        print 'MET Sig:', ev.MET_sig, event.MET_significance
+    event.Jet_dpt = [ x*ev.Jet_pt[i] for i,x in enumerate(ev.Jet_dpt) ] if len(ev.Jet_dpt) > 0 else [0]
 
 def getMET_neEmEBalace( event, sample ):
     Jet_dPhiJetMET = []
@@ -541,7 +372,7 @@ def getMET_neEmEBalace( event, sample ):
 def getNJet( event, sample ):
     allJets = []
     for i in range(event.nJet):
-        allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmask[i], 'neHEF':event.Jet_neHEF[i]})
+        allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmask[i], 'neHEF':event.Jet_neHEF[i], 'cleanmaskMETSig':event.Jet_cleanmaskMETSig[i]})
 
     highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5 and j['cleanmask']>0), allJets )
     highPtJetsNoCleanmask = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5), allJets )
@@ -550,6 +381,14 @@ def getNJet( event, sample ):
     event.nJet_noLeptons = len( filter( lambda j:j['cleanmask']>0, allJets) )
     lowPtJets = filter( lambda j: j['pt']<30., allJets)
     event.nJet_lowPt                = len( lowPtJets )
+    event.HT_lowPt                  = sum( [ x['pt'] for x in lowPtJets] )
+
+    # get all soft jets that enter the MET Significance
+    lowPtJets_METSig                = filter( lambda j: (not 2.65<abs(j['eta'])<3.14 and j['cleanmaskMETSig']), lowPtJets)
+    event.nJet_lowPt_METSig         = len( lowPtJets_METSig )
+    event.HT_lowPt_METSig           = sum( [ x['pt'] for x in lowPtJets_METSig] )
+    event.nJet_lowPt_METSig_inclEE  = len( filter( lambda j: (j['cleanmaskMETSig']), lowPtJets) )
+
     event.nJet_lowPt_eta0to0p8      = len( filter( lambda j:abs(j['eta'])<0.8, lowPtJets) )
     event.nJet_lowPt_eta0p8to1p3    = len( filter( lambda j:0.8 <= abs(j['eta']) < 1.3, lowPtJets) )
     event.nJet_lowPt_eta1p3to1p9    = len( filter( lambda j:1.3 <= abs(j['eta']) < 1.9, lowPtJets) )
@@ -569,7 +408,7 @@ def getNJet( event, sample ):
 def getJets( event, sample ):
     allJets = []
     for i in range(event.nJet):
-        allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmaskMETSig[i], 'neHEF':event.Jet_neHEF[i]})
+        allJets.append({'pt':event.Jet_pt_nom[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmaskMETSig[i], 'neHEF':event.Jet_neHEF[i]})
 
     highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<5.0 and j['jetId']>5 and j['cleanmask']>0), allJets )
 
@@ -592,12 +431,20 @@ def getJets( event, sample ):
         event.j2_eta    = highPtJets[1]['eta']
         event.j2_phi    = highPtJets[1]['phi']
 
+def getSoftJetWeight( event, sample ):
+    import numpy as np
+    event.reweight_nJetLowPt = 1
+    weights = [0.5, 0.5, 0.6, 0.7, 0.9, 1.2] + list(np.arange(1.5, 9., 0.5))
+    event.reweight_nJetLowPt = weights[event.nJet_lowPt]if event.nJet_lowPt < len(weights) else weights[-1]
+    #if event.nJet_lowPt ==0 : w = 0.5
+
 sequence += [ getJets ]
 
 if args.calcMETSig:
     sequence += [ calcMETSig ]
+sequence += [getNJet]
 if year == 2017:
-    sequence += [ getMET_neEmEBalace, getNJet ]
+    sequence += [ getMET_neEmEBalace, getSoftJetWeight ]
 
 def getLeptonSelection( mode ):
   if   mode=="mumu":
@@ -605,7 +452,7 @@ def getLeptonSelection( mode ):
         return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>25&&Muon_isGoodMuon)>0"
     else:
         # slower trigger turn-on in 2017&2018
-        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0"
+        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>30&&Muon_isGoodMuon)>0"
 
 nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc="Summer16")
 nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc="Summer16")
@@ -644,7 +491,12 @@ for index, mode in enumerate(allModes):
     sample.scale          = lumi_scale
     sample.read_variables = ['puWeight/F','puWeightUp/F', 'Pileup_nTrueInt/F']
     #sample.weight         = lambda event, sample: event.puWeight*nTrueInt36fb_puRW(event.Pileup_nTrueInt)
-    sample.weight         = lambda event, sample: event.puWeight
+    if args.reweightSoftJets:
+        sample.weight         = lambda event, sample: event.puWeight * event.reweight_nJetLowPt
+    elif args.PUup:
+        sample.weight         = lambda event, sample: event.puWeightUp
+    else:
+        sample.weight         = lambda event, sample: event.puWeight
     sample.setSelectionString([getFilterCut(isData=False, year=year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
 
   if not args.noData:
@@ -691,6 +543,12 @@ for index, mode in enumerate(allModes):
   plots.append(Plot(
       texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
       attribute = TreeVariable.fromString( "MET_pt/F" ),
+      binning=[400/20,0,400],
+  ))
+
+  plots.append(Plot(
+      texX = 'E_{T}^{miss} (GeV) (V19)', texY = 'Number of Events / 20 GeV',
+      attribute = TreeVariable.fromString( "MET_pt_nom/F" ),
       binning=[400/20,0,400],
   ))
 
@@ -827,13 +685,13 @@ for index, mode in enumerate(allModes):
     #))
 
   # removed from nanoAOD
-  if year == 2018:
+  if year == 2018 or year == 2017:
     plots.append(Plot(
       texX = 'E_{T}^{miss} Significance', texY = 'Number of Events',
       attribute = TreeVariable.fromString('MET_significance/F'),
       binning= [50,0,100],
     ))
-    
+  if year == 2018:
     plots.append(Plot(
       texX = 'E_{T}^{miss} recorr', texY = 'Number of Events',
       attribute = TreeVariable.fromString('MET_pt_nom/F'),
@@ -981,192 +839,227 @@ for index, mode in enumerate(allModes):
       binning=[20,0,500],
     ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (all jets)', texY = 'Number of Events',
-      name = 'nJet',
-      attribute = lambda event, sample: event.nJet,
-      binning=[40,0,40],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (all jets)', texY = 'Number of Events',
+    name = 'nJet',
+    attribute = lambda event, sample: event.nJet,
+    binning=[40,0,40],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
-      name = 'nJet_lowPt',
-      attribute = lambda event, sample: event.nJet_lowPt,
-      binning=[40,0,40],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'nJet_lowPt',
+    attribute = lambda event, sample: event.nJet_lowPt,
+    binning=[40,0,40],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, |#eta|<0.8)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta0to0p8',
-      attribute = lambda event, sample: event.nJet_lowPt_eta0to0p8,
-      binning=[20,0,20],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'nJet_lowPt_METSig',
+    attribute = lambda event, sample: event.nJet_lowPt_METSig,
+    binning=[40,0,40],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, 0.8<|#eta|<1.3)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta0p8to1p3',
-      attribute = lambda event, sample: event.nJet_lowPt_eta0p8to1p3,
-      binning=[20,0,20],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'nJet_lowPt_METSig_inclEE',
+    attribute = lambda event, sample: event.nJet_lowPt_METSig_inclEE,
+    binning=[40,0,40],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, 1.3<|#eta|<1.9)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta1p3to1p9',
-      attribute = lambda event, sample: event.nJet_lowPt_eta1p3to1p9,
-      binning=[20,0,20],
-    ))
+  #plots.append(Plot(
+  #  texX = '#sigma(p_{T})', texY = 'Number of Events',
+  #  name = 'Jet_dpt[0]',
+  #  attribute = lambda event, sample: event.Jet_dpt[0],
+  #  binning=[40,-10.,10.],
+  #))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, 1.9<|#eta|<2.5)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta1p9to2p5',
-      attribute = lambda event, sample: event.nJet_lowPt_eta1p9to2p5,
-      binning=[20,0,20],
-    ))
+  plots.append(Plot(
+    texX = 'H_{T} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'HT_lowPt',
+    attribute = lambda event, sample: event.HT_lowPt,
+    binning=[40,0,400],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta2p5to3p1',
-      attribute = lambda event, sample: event.nJet_lowPt_eta2p5to3p1,
-      binning=[20,0,20],
-    ))
+  plots.append(Plot(
+    texX = 'H_{T} (p_{T}<30 GeV)', texY = 'Number of Events',
+    name = 'HT_lowPt_METSig',
+    attribute = lambda event, sample: event.HT_lowPt_METSig,
+    binning=[40,0,400],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}<30 GeV, 3.1<|#eta|)', texY = 'Number of Events',
-      name = 'nJet_lowPt_eta3p1toInf',
-      attribute = lambda event, sample: event.nJet_lowPt_eta3p1toInf,
-      binning=[20,0,20],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, |#eta|<0.8)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta0to0p8',
+    attribute = lambda event, sample: event.nJet_lowPt_eta0to0p8,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4)', texY = 'Number of Events',
-      name = 'nJet_good',
-      attribute = lambda event, sample: event.nJet_good,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 0.8<|#eta|<1.3)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta0p8to1p3',
+    attribute = lambda event, sample: event.nJet_lowPt_eta0p8to1p3,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4, no cleanmask)', texY = 'Number of Events',
-      name = 'nJet_good_noCleanmask',
-      attribute = lambda event, sample: event.nJet_good_noCleanmask,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 1.3<|#eta|<1.9)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta1p3to1p9',
+    attribute = lambda event, sample: event.nJet_lowPt_eta1p3to1p9,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{j} (all jets, no leptons)', texY = 'Number of Events',
-      name = 'nJet_noLeptons',
-      attribute = lambda event, sample: event.nJet_noLeptons,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 1.9<|#eta|<2.5)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta1p9to2p5',
+    attribute = lambda event, sample: event.nJet_lowPt_eta1p9to2p5,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{e}', texY = 'Number of Events',
-      name = 'nElectron',
-      attribute = lambda event, sample: event.nElectron,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.nJet_lowPt_eta2p5to3p1,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{#mu}', texY = 'Number of Events',
-      name = 'nMuon',
-      attribute = lambda event, sample: event.nMuon,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}<30 GeV, 3.1<|#eta|)', texY = 'Number of Events',
+    name = 'nJet_lowPt_eta3p1toInf',
+    attribute = lambda event, sample: event.nJet_lowPt_eta3p1toInf,
+    binning=[20,0,20],
+  ))
 
-    plots.append(Plot(
-      texX = 'N_{#gamma}', texY = 'Number of Events',
-      name = 'nPhoton',
-      attribute = lambda event, sample: event.nPhoton,
-      binning=[10,0,10],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4)', texY = 'Number of Events',
+    name = 'nJet_good',
+    attribute = lambda event, sample: event.nJet_good,
+    binning=[10,0,10],
+  ))
 
-    plots.append(Plot(
-      texX = '#Sigma p_T*neEmEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-      name = 'sumPtneEmEF_lowPt_eta2p5to3p1',
-      attribute = lambda event, sample: event.sumPtneEmEF_lowPt_eta2p5to3p1,
-      binning=[20,0,100],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (p_{T}>30 GeV, |#eta|<2.4, no cleanmask)', texY = 'Number of Events',
+    name = 'nJet_good_noCleanmask',
+    attribute = lambda event, sample: event.nJet_good_noCleanmask,
+    binning=[10,0,10],
+  ))
 
-    plots.append(Plot(
-      texX = '#Sigma p_T*neHEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
-      name = 'sumPtneHEF_lowPt_eta2p5to3p1',
-      attribute = lambda event, sample: event.sumPtneHEF_lowPt_eta2p5to3p1,
-      binning=[20,0,100],
-    ))
+  plots.append(Plot(
+    texX = 'N_{j} (all jets, no leptons)', texY = 'Number of Events',
+    name = 'nJet_noLeptons',
+    attribute = lambda event, sample: event.nJet_noLeptons,
+    binning=[10,0,10],
+  ))
 
-    ### 2D Data plots ###
-    plots2D.append(Plot2D(
-      stack = stackData,
-      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-      name = "Data_METvsMETmin",
-      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-      binning = [40,0,200, 40, 0, 200]
-    ))
+  plots.append(Plot(
+    texX = 'N_{e}', texY = 'Number of Events',
+    name = 'nElectron',
+    attribute = lambda event, sample: event.nElectron,
+    binning=[10,0,10],
+  ))
 
-    plots2D.append(Plot2D(
-      stack = stackData,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,2.6,3.2, 32, -3.2, 3.2]
-    ))
+  plots.append(Plot(
+    texX = 'N_{#mu}', texY = 'Number of Events',
+    name = 'nMuon',
+    attribute = lambda event, sample: event.nMuon,
+    binning=[10,0,10],
+  ))
 
-    plots2D.append(Plot2D(
-      stack = stackData,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-    ))
-    
-    ### 2D DY plots ###
-    plots2D.append(Plot2D(
-      stack = stackDY,
-      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-      name = "DY_METvsMETmin",
-      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-      binning = [40,0,200, 40, 0, 200]
-    ))
+  plots.append(Plot(
+    texX = 'N_{#gamma}', texY = 'Number of Events',
+    name = 'nPhoton',
+    attribute = lambda event, sample: event.nPhoton,
+    binning=[10,0,10],
+  ))
 
-    plots2D.append(Plot2D(
-      stack = stackDY,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,2.6,3.2, 32, -3.2, 3.2]
-    ))
+  plots.append(Plot(
+    texX = '#Sigma p_T*neEmEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'sumPtneEmEF_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.sumPtneEmEF_lowPt_eta2p5to3p1,
+    binning=[20,0,100],
+  ))
 
-    plots2D.append(Plot2D(
-      stack = stackDY,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-    ))
+  plots.append(Plot(
+    texX = '#Sigma p_T*neHEF (jets, p_{T}<30 GeV, 2.5<|#eta|<3.1)', texY = 'Number of Events',
+    name = 'sumPtneHEF_lowPt_eta2p5to3p1',
+    attribute = lambda event, sample: event.sumPtneHEF_lowPt_eta2p5to3p1,
+    binning=[20,0,100],
+  ))
 
-    ### 2D DY plots ###
-    plots2D.append(Plot2D(
-      stack = stackTT,
-      texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
-      name = "Top_METvsMETmin",
-      attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
-      binning = [40,0,200, 40, 0, 200]
-    ))
+  #  ### 2D Data plots ###
+  #  plots2D.append(Plot2D(
+  #    stack = stackData,
+  #    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+  #    name = "Data_METvsMETmin",
+  #    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+  #    binning = [40,0,200, 40, 0, 200]
+  #  ))
 
-    plots2D.append(Plot2D(
-      stack = stackTT,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,-3.2,2.6, 32, -3.2, 3.2]
-    ))
+  #  plots2D.append(Plot2D(
+  #    stack = stackData,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "Data_Jet_eta_EE_vs_Jet_phi_EE_plus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,2.6,3.2, 32, -3.2, 3.2]
+  #  ))
 
-    plots2D.append(Plot2D(
-      stack = stackTT,
-      texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
-      name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
-      attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
-      binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
-    ))
+  #  plots2D.append(Plot2D(
+  #    stack = stackData,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "Data_Jet_eta_EE_vs_Jet_phi_EE_minus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+  #  ))
+  #  
+  #  ### 2D DY plots ###
+  #  plots2D.append(Plot2D(
+  #    stack = stackDY,
+  #    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+  #    name = "DY_METvsMETmin",
+  #    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+  #    binning = [40,0,200, 40, 0, 200]
+  #  ))
+
+  #  plots2D.append(Plot2D(
+  #    stack = stackDY,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "DY_Jet_eta_EE_vs_Jet_phi_EE_plus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,2.6,3.2, 32, -3.2, 3.2]
+  #  ))
+
+  #  plots2D.append(Plot2D(
+  #    stack = stackDY,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "DY_Jet_eta_EE_vs_Jet_phi_EE_minus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+  #  ))
+
+  #  ### 2D DY plots ###
+  #  plots2D.append(Plot2D(
+  #    stack = stackTT,
+  #    texX = 'E_{T}^{miss} (GeV)', texY = 'E_{T}^{miss, min} (GeV)',
+  #    name = "Top_METvsMETmin",
+  #    attribute = [ lambda event, sample: event.MET_pt, lambda event, sample: event.MET_min_pseudoJet ],
+  #    binning = [40,0,200, 40, 0, 200]
+  #  ))
+
+  #  plots2D.append(Plot2D(
+  #    stack = stackTT,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "Top_Jet_eta_EE_vs_Jet_phi_EE_plus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,-3.2,2.6, 32, -3.2, 3.2]
+  #  ))
+
+  #  plots2D.append(Plot2D(
+  #    stack = stackTT,
+  #    texX = '#eta(jet, EE)', texY = '#phi(jet, EE)',
+  #    name = "Top_Jet_eta_EE_vs_Jet_phi_EE_minus",
+  #    attribute = [ lambda event, sample: event.Jet_eta_EE, lambda event, sample: event.Jet_phi_EE ],
+  #    binning = [20,-3.2,-2.6, 32, -3.2, 3.2]
+  #  ))
 
   #plotting.fill_with_draw( plots )
   plotting.fill( plots, read_variables = read_variables, sequence = sequence)
