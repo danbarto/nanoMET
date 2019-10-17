@@ -30,6 +30,8 @@ argParser.add_argument('--selection',         action='store',            default
 argParser.add_argument('--selectSys',         action='store',      default='all')
 #argParser.add_argument('--noMultiThreading',  action='store_true', default='False', help="noMultiThreading?") # Need no multithreading when doing batch-to-natch
 argParser.add_argument('--showOnly',          action='store',      default=None)
+argParser.add_argument('--skipJER',           action='store_true',      default=False)
+argParser.add_argument('--skipUnclEn',        action='store_true',      default=False)
 argParser.add_argument('--small',             action='store_true',     help='Run only on a small subset of the data?', )
 argParser.add_argument('--runLocal',             action='store_true',     help='Run local or submit?', )
 argParser.add_argument('--isChild',           action='store_true', default=False)
@@ -55,8 +57,10 @@ logger.info("Starting")
 #
 # Systematics to run over
 #
-jet_systematics    = ['jesTotalUp','jesTotalDown']#, 'jerUp', 'jerDown']# 'JERDown','JECVUp','JECVDown']
-met_systematics    = ['unclustEnUp', 'unclustEnDown']
+jet_systematics    = ['jesTotalUp','jesTotalDown']
+if not args.skipJER:
+    jet_systematics += ['jerUp', 'jerDown']
+met_systematics    = ['unclustEnUp', 'unclustEnDown'] if not args.skipUnclEn else []
 jme_systematics    = jet_systematics + met_systematics
 weight_systematics = ['puWeightUp', 'puWeightDown']
 
@@ -67,10 +71,16 @@ else:                                                       all_systematics = [N
 
 sys_pairs = [\
     ('JES',         'jesTotalUp', 'jesTotalDown'),
-    ('JER',         'jerUp', 'jerDown'),
-    ('unclustEn',   'unclustEnUp', 'unclustEnDown'),
     ('puWeight',    'puWeightUp', 'puWeightDown')
 ]
+if not args.skipUnclEn:
+    sys_pairs += [
+        ('unclustEn',   'unclustEnUp', 'unclustEnDown'),
+    ]
+if not args.skipJER:
+    sys_pairs += [
+        ('JER',         'jerUp', 'jerDown'),
+    ]
 
 #
 # If this is the mother process, launch the childs and exit (I know, this could potententially be dangereous if the --isChild and --selection commands are not given...)
@@ -116,18 +126,17 @@ year = int(args.year)
 try: os.makedirs(os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory))
 except: pass
 
-logger.info("Logger still working? 1")
 #
 # Make samples, will be searched for in the postProcessing directory
 #
 
 if year == 2016:
-    postProcessing_directory = "2016_v6/dimuon/"
+    postProcessing_directory = "2016_v20/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v6/dimuon/"
+    postProcessing_directory = "2016_v20/dimuon/"
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
     data_sample = DoubleMuon_Run2016
-    mc          = [DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16]
+    mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
     dy          = DY_LO_16
     top         = Top_16
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
@@ -144,9 +153,9 @@ elif year == 2017:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
 elif year == 2018:
-    postProcessing_directory = "2018_v11/dimuon/"
+    postProcessing_directory = "2018_v19_2/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v11/dimuon/"
+    postProcessing_directory = "2018_v19_1/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
@@ -155,7 +164,6 @@ elif year == 2018:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
 
-logger.info("Logger still working? 2")
 #
 # Text on the plots
 #
@@ -172,8 +180,8 @@ def drawObjects( plotData, dataMCScale, lumi_scale ):
 
 
 def addSys( selectionString , sys = None ):
-    if   sys in jet_systematics: return selectionString.replace('Jet_pt', 'Jet_pt_' + sys).replace('MET_pt', 'MET_pt_' + sys)
-    elif sys in met_systematics: return selectionString.replace('MET_pt', 'MET_pt_' + sys)
+    if   sys in jet_systematics: return selectionString.replace('Jet_pt_nom', 'Jet_pt_' + sys).replace('MET_pt_nom', 'MET_pt_' + sys)
+    elif sys in met_systematics: return selectionString.replace('MET_pt_nom', 'MET_pt_' + sys)
     else:                        return selectionString
 
 
@@ -194,13 +202,11 @@ def weightMC( sys = None ):
 #
 # Read variables and sequences
 #
-read_variables = ["weight/F", "Jet[pt/F,eta/F,phi/F]",
-                  "MET_pt/F", "MET_phi/F",
+read_variables = ["weight/F", "Jet[pt/F,eta/F,phi/F,pt_nom/F]",
+                  "MET_pt/F", "MET_phi/F",# "MET_pt_nom/F", "MET_phi_nom/F"
                   ]
 
 sequence = []
-
-logger.info("Logger still working? 3")
 
 
 def getLeptonSelection( mode ):
@@ -217,7 +223,6 @@ def getLeptonSelection( mode ):
 #
 allPlots   = {}
 allModes   = ['mumu']
-logger.info("Logger still working?")
 for index, mode in enumerate(allModes):
     logger.info("Modes")
     logger.info('Working on mode ' + str(mode))
@@ -235,7 +240,6 @@ for index, mode in enumerate(allModes):
     data_weight = lambda event, sample: event.weight
     data_weight_string = "weight"
 
-    print lumi_scale
     logger.info('Lumi scale is ' + str(lumi_scale))
 
 
@@ -291,7 +295,7 @@ for index, mode in enumerate(allModes):
                 texX            = 'E_{T}^{miss} (GeV)', 
                 texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
                 stack           = stack_data, 
-                attribute       = TreeVariable.fromString( "MET_pt/F" ),
+                attribute       = TreeVariable.fromString( "MET_pt_nom/F" ),
                 binning         = [20,0,400],
                 selectionString = cutInterpreter.cutString(args.selection),
                 weight          = data_weight,
@@ -307,7 +311,7 @@ for index, mode in enumerate(allModes):
                 texX            = 'E_{T}^{miss} (GeV)',
                 texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
                 stack           = sys_stacks[sys],
-                attribute       = TreeVariable.fromString('MET_pt/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_%s/F" % sys ),
+                attribute       = TreeVariable.fromString('MET_pt_nom/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_%s/F" % sys ),
                 binning         = [20,0,400],
                 selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
                 weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
@@ -447,7 +451,6 @@ for index, mode in enumerate(allModes):
 
     ]
 
-    print args.year
     result_dir  = os.path.join(plot_directory, "systematicsPlots", str(args.year), args.plot_directory, mode, args.selection)
     result_file = os.path.join(result_dir, 'results.pkl')
     try: os.makedirs(result_dir)
@@ -464,13 +467,11 @@ for index, mode in enumerate(allModes):
             allPlots.update({p.name : p.histos for p in plots})
         else:                           
             allPlots = {p.name : p.histos for p in plots}
-        print result_file
         pickle.dump( allPlots, file( result_file, 'w' ) )
         removeLock( result_file ) 
         logger.info( "Done for sys " + args.selectSys )
 
     else:
-        print result_file
         allPlots = pickle.load(file( result_file ))
 
         from RootTools.plot.Plot import addOverFlowBin1D
@@ -495,7 +496,6 @@ for index, mode in enumerate(allModes):
                 print "Couldn't find central histogram! Taking %s insted."%plot_mc.keys()[0]
                 shapeHists = {comp:plot_mc[plot_mc.keys()[0]].histos[0][comp] for comp in mc}
 
-            print shapeHists
 
             #Calculating systematics
             h_summed = {k: plot_mc[k].histos_added[0][0].Clone() for k in plot_mc.keys()}
@@ -518,9 +518,7 @@ for index, mode in enumerate(allModes):
 
             # Adding in quadrature
             for k in h_sys.keys():
-                print k
                 for ib in range( 1 + h_rel_err.GetNbinsX() ):
-                  print h_sys[k].GetBinContent(ib)
                   h_rel_err.SetBinContent(ib, h_rel_err.GetBinContent(ib) + h_sys[k].GetBinContent(ib)**2 )
 
             ## In case one wants to add uncertainties to specific backgrounds (like x-sec), that can be done here
@@ -579,7 +577,9 @@ for index, mode in enumerate(allModes):
             #print "plot.histos[0][pos_top].Integral()", pos_top,plot.histos 
             #print "plot.histos[0][pos_top].Integral()", plot.histos[0][pos_top].Integral()    
             for log in [False, True]:
-                plotDir = os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory, mode + ("_log" if log else "") + "_scaled", args.selection)
+                postFix = '_noJER' if args.skipJER else ''
+                postFix += '_noUnclEn' if args.skipUnclEn else ''
+                plotDir = os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory + postFix, mode + ("_log" if log else "") + "_scaled", args.selection)
                 if args.showOnly: plotDir = os.path.join(plotDir, "only_" + args.showOnly)
                 plotting.draw(plot,
                     plot_directory = plotDir,

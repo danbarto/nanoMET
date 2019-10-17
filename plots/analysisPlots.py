@@ -111,9 +111,9 @@ elif year == 2017:
     JERMC       = JetResolution('Fall17_V3_MC')
 
 elif year == 2018:
-    postProcessing_directory = "2018_v19/dimuon/"
+    postProcessing_directory = "2018_v19_1/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v19/dimuon/" #v11 are the old ones without JER
+    postProcessing_directory = "2018_v19_1/dimuon/" #v11 are the old ones without JER
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     #postProcessing_directory = "2018_v11/dimuon/"
     #from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
