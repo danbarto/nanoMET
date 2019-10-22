@@ -14,13 +14,11 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import M
 # Import modules
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data2016, pufile_mc2016, pufile_data2017, pufile_data2018, pufile_mc2017, pufile_mc2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
-#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
-#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib                import jetRecalib
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
+
+# private modules
 from METSigTools           import METSigTools
-#from PhysicsTools.NanoAODTools.postprocessing.modules.private.METminProducer        import METminProducer
 from lumiWeightProducer    import lumiWeightProducer
-#from PhysicsTools.NanoAODTools.postprocessing.modules.private.applyJSON             import applyJSON
 
 # argparser
 import argparse
@@ -195,20 +193,7 @@ if year == 2016:
     metSigParamsMC      = [1.617529475909303, 1.617529475909303, 1.4505983036866312, 1.4505983036866312, 1.411498565372343, 1.411498565372343, 1.4087559908291813, 1.4087559908291813, 1.3633674107893856, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
     metSigParamsData    = [1.843242937068234, 1.843242937068234, 1.64107911184195,   1.64107911184195,   1.567040591823117, 1.567040591823117, 1.5077143780804294, 1.5077143780804294, 1.614014783345394,  1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
     JER                 = "Summer16_25nsV1_MC"          if not sample.isData else "Summer16_25nsV1_DATA"
-    JERera              = "Summer16_25nsV1"
-    archive             = ''
-    if sample.isData:
-        archive = "Summer16_07Aug2017_V11_DATA"
-        if sample.name.count("Run2016B") or sample.name.count("Run2016C") or sample.name.count("Run2016D"):
-            JEC         = "Summer16_07Aug2017BCD_V11_DATA"
-        elif sample.name.count("Run2016E") or sample.name.count("Run2016F"):
-            JEC         = "Summer16_07Aug2017EF_V11_DATA"
-        elif sample.name.count("Run2016G") or sample.name.count("Run2016H"):
-            JEC         = "Summer16_07Aug2017GH_V11_DATA"
-        else:
-            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
-    else:
-        JEC             = "Summer16_07Aug2017_V11_MC"
+    archive             = '' if not sample.isData else "Summer16_07Aug2017_V11_DATA"
     jetThreshold = 15
 
 elif year == 2017:
@@ -217,22 +202,7 @@ elif year == 2017:
     metSigParamsMC      = [1.9648214119268503, 1.5343086462230238, 1.9167197601498538, 1.5145044341064964, 1.8069380221985405, 1.3217263662622654, 1.5506294867561126, 1.272977540964842,  1.50742322311234,   1.6542883449796797, -0.0017865650107230548,  0.6593106706741719]
     metSigParamsData    = [2.228118299837604,  1.2420725475347338, 2.227630982417529,  1.256752205787215,  2.0215250734187853, 1.1557507029911258, 1.7350536144535336, 1.1587692458345757, 1.9385081854607988, 1.8726188460472792, -2.6697894266706265e-05, 0.646984812801919]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
-    JERera              = "Fall17_V3"
-    archive             = ''
-    if sample.isData:
-        archive = "Fall17_17Nov2017_V32_DATA"
-        if sample.name.count('Run2017B'):
-            JEC         = "Fall17_17Nov2017B_V32_DATA"
-        elif sample.name.count('Run2017C'):
-            JEC         = "Fall17_17Nov2017C_V32_DATA"
-        elif sample.name.count('Run2017D') or sample.name.count('Run2017E'):
-            JEC         = "Fall17_17Nov2017DE_V32_DATA"
-        elif sample.name.count('Run2017F'):
-            JEC         = "Fall17_17Nov2017F_V32_DATA"
-        else:
-            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
-    else:
-        JEC             = "Fall17_17Nov2017_V32_MC"
+    archive             = '' if not sample.isData else  "Fall17_17Nov2017_V32_DATA"
     jetThreshold = 15
 
 elif year == 2018:
@@ -241,16 +211,7 @@ elif year == 2018:
     metSigParamsMC      = [1.9033100259447273, 1.7374326087706358, 1.6957838005481387, 1.7283187962364615, 1.5868244614361302, 1.526252837049335, 1.3744055574137417, 1.4500298644941831, 1.4796204632654997, 1.4481227819959115, 0.0019899110367503207, 0.6927496536100137]
     metSigParamsData    = [1.7492714572981323, 1.3430198915313956, 1.911348554103867, 1.3718438058490257, 1.5885672661901442, 1.4385903478138795, 1.521901070409261, 1.4522895772008289, 1.8870084799263003, 1.7138750357657668, -1.359837542505224e-06, 0.7434240965656385]
     JER                 = "Autumn18_V1_MC"                if not sample.isData else "Autumn18_V1_DATA"
-    JERera              = "Autumn18_V1"
-    archive             = ''
-    if sample.isData:
-        archive = "Autumn18_V19_DATA"
-        if sample.name.count("Run2018"):
-            JEC         = "Autumn18_Run%s_V19_DATA"%era
-        else:
-            raise NotImplementedError ("Don't know what JECs to use for sample %s"%sample.name)
-    else:
-        JEC             = "Autumn18_V19_MC"
+    archive             = '' if not sample.isData else "Autumn18_V19_DATA"
     jetThreshold = 25
 
 
