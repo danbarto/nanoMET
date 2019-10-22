@@ -271,7 +271,7 @@ if sample.isData:
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
-        applyJSON(json),
+        #applyJSON(json),
         #METminProducer(isData=True),
     ]
 
@@ -283,13 +283,13 @@ else:
         #jetmetProducer,
         METSigTools(),
         METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
-        applyJSON(None),
+        #applyJSON(None),
         #METminProducer(isData=False, calcVariations=True),
     ]
 
 logger.info("Preparing post-processor.")
 
-p = PostProcessor(output_directory,sample.files,cut=cut, modules=modules)
+p = PostProcessor(output_directory,sample.files,cut=cut, modules=modules, jsonInput=(json if sample.isData else None) ) # could make use of hadd to reduce number of files in the future.
 if not options.prepare:
     logger.info("Running ... ")
     p.run()
