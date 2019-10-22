@@ -14,12 +14,13 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import M
 # Import modules
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data2016, pufile_mc2016, pufile_data2017, pufile_data2018, pufile_mc2017, pufile_mc2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib                import jetRecalib
-from PhysicsTools.NanoAODTools.postprocessing.modules.private.METSigTools           import METSigTools
-from PhysicsTools.NanoAODTools.postprocessing.modules.private.METminProducer        import METminProducer
-from PhysicsTools.NanoAODTools.postprocessing.modules.private.lumiWeightProducer    import lumiWeightProducer
-from PhysicsTools.NanoAODTools.postprocessing.modules.private.applyJSON             import applyJSON
+#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetUncertainties       import jetmetUncertaintiesProducer
+#from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetRecalib                import jetRecalib
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
+from METSigTools           import METSigTools
+#from PhysicsTools.NanoAODTools.postprocessing.modules.private.METminProducer        import METminProducer
+from lumiWeightProducer    import lumiWeightProducer
+#from PhysicsTools.NanoAODTools.postprocessing.modules.private.applyJSON             import applyJSON
 
 # argparser
 import argparse
@@ -261,30 +262,26 @@ vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
 
 print vetoEtaRegion
 
-
+METBranchName = 'MET' if not year == 2017 else 'METFixEE2017'
+JMECorrector = createJMECorrector(isMC=(not sample.isData), dataYear=year, runPeriod=era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=METBranchName, isFastSim=False)
+modules = [
+    JMECorrector()
+]
 
 
 if sample.isData:
-    modules = [
-        #jetRecalib(JEC, JEC, METBranchName=METCollection),
-        jetmetUncertaintiesProducer(str(year), JEC, archive=archive, jesUncertainties=[ "Total" ], jetType = "AK4PFchs", redoJEC=True, metBranchName=METCollection, isData=True),
+    modules += [
         METSigTools(),
         lumiWeightProducer(1, isData=True),
         METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
-        #applyJSON(json),
-        #METminProducer(isData=True),
     ]
 
 else:
-    modules = [
+    modules += [
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
-        jetmetUncertaintiesProducer(str(year), JEC, jesUncertainties=[ "Total" ], jetType = "AK4PFchs", redoJEC=True, metBranchName=METCollection),
-        #jetmetProducer,
         METSigTools(),
         METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
-        #applyJSON(None),
-        #METminProducer(isData=False, calcVariations=True),
     ]
 
 logger.info("Preparing post-processor.")
