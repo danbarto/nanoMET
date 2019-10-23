@@ -19,6 +19,7 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 impor
 # private modules
 from METSigTools           import METSigTools
 from lumiWeightProducer    import lumiWeightProducer
+from nanoMET.tools.user    import postprocessing_output_directory
 
 # argparser
 import argparse
@@ -155,7 +156,7 @@ logger.info("Using selection: %s", cut)
 
 # Main part
 
-directory = "/afs/hephy.at/data/dspitzbart03/nanoSamples/%s_%s/"%(options.year, options.era)
+directory = os.path.join( postprocessing_output_directory, "%s_%s"%(options.year, options.era) )
 output_directory = os.path.join( directory, options.skim, sample.name )
 
 fileNames = [ ('/'.join(x.split('/')[:-1]), x.split('/')[-1]) for x in sample.files if nonEmptyFile(x)  ]
