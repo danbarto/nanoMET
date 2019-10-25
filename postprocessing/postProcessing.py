@@ -224,7 +224,7 @@ vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
 print vetoEtaRegion
 
 METBranchName = 'MET' if not year == 2017 else 'METFixEE2017'
-JMECorrector = createJMECorrector(isMC=(not sample.isData), dataYear=year, runPeriod=era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=METBranchName, isFastSim=False)
+JMECorrector = createJMECorrector(isMC=(not sample.isData), dataYear=year, runPeriod=era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=METBranchName, isFastSim=False, applySmearing=False)
 modules = [
     JMECorrector()
 ]

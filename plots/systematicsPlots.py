@@ -11,7 +11,7 @@ from math                           import sqrt, cos, sin, pi
 from RootTools.core.standard        import *
 from RootTools.plot.helpers         import copyIndexPHP
 from nanoMET.tools.user             import plot_directory
-from Samples.Tools.metFilters       import getFilterCut
+from Analysis.Tools.metFilters       import getFilterCut
 from nanoMET.tools.cutInterpreter   import cutInterpreter
 from nanoMET.tools.lock             import waitForLock, removeLock
 
