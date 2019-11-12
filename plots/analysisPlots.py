@@ -65,11 +65,11 @@ if args.jetThreshold:                 args.plot_directory += "_sumPt%s"%args.jet
 
 # Make samples, will be searched for in the postProcessing directory
 from tunes import tuneParams
-tuneEra = year if not args.tuneEra else int(args.tuneEra)
+tuneEra = args.year if not args.tuneEra else int(args.tuneEra)
 paramsData  = tuneParams[tuneEra]['data']
 paramsMC    = tuneParams[tuneEra]['mc']
 
-if year == 2016:
+if args.year == 2016:
     postProcessing_directory = "2016_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
     postProcessing_directory = "2016_v21/dimuon/"
@@ -85,7 +85,7 @@ if year == 2016:
     JERMC       = JetResolution('Summer16_25nsV1_MC')
 
 
-elif year == 2017:
+elif args.year == 2017:
     postProcessing_directory = "2017_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
     postProcessing_directory = "2017_v21/dimuon/"
@@ -104,7 +104,7 @@ elif year == 2017:
     JERData     = JetResolution('Fall17_V3_DATA')
     JERMC       = JetResolution('Fall17_V3_MC')
 
-elif year == 2018:
+elif args.year == 2018:
     postProcessing_directory = "2018_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
     postProcessing_directory = "2018_v21/dimuon/" #v11 are the old ones without JER
@@ -138,7 +138,7 @@ def drawObjects( plotData, dataMCScale, lumi_scale ):
 
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, 'analysis_plots', str(year), args.plot_directory, mode + ("_log" if log else ""), args.selection)
+    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', str(args.year), args.plot_directory, args.selection, mode, "log" if log else "lin")
     for plot in plots:
       if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
       if not args.noData: 
@@ -163,18 +163,16 @@ read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_ph
                   "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"
                  ]
 
-if year == 2018 or year == 2017:
+if args.year == 2018 or args.year == 2017:
     read_variables += ["Jet[pt_nom/F]"]
-if year == 2018:
+if args.year == 2018:
     read_variables += ["MET_pt_nom/F", "MET_phi_nom/F"]
-if year == 2017:
+if args.year == 2017:
     read_variables += ["METFixEE2017_pt_nom/F", "METFixEE2017_phi_nom/F"]
 
-sequence = []
-
-vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
-jetThreshold = 25 if (year == 2017 or year == 2018) else 15
-if args.jetThreshold: jetThreshold = float(args.jetThreshold)
+sequence      = []
+vetoEtaRegion = (2.65, 3.14)             if args.year == 2017 else (10,10)
+jetThreshold  = float(args.jetThreshold) if args.jetThreshold else 15
 
 def calcMETSig( event, sample ):
     if sample.isData:
@@ -183,16 +181,16 @@ def calcMETSig( event, sample ):
     else:
         JER = JERMC
         params = paramsMC
-    if year == 2017:
+    if args.year == 2017:
         METPtVar = "METFixEE2017_pt_nom"
         METPhiVar = "METFixEE2017_phi_nom"
-    elif year == 2018:
+    elif args.year == 2018:
         METPtVar = "MET_pt_nom"
         METPhiVar = "MET_phi_nom"
     else:
         METPtVar = "MET_pt"
         METPhiVar = "MET_phi"
-    if year == 2018 or year ==2017: JetCollection = "Jet_pt_nom"
+    if args.year == 2018 or args.year ==2017: JetCollection = "Jet_pt_nom"
     else: JetCollection = "Jet_pt"
     ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
     ev.calcMETSig(params)
@@ -379,7 +377,7 @@ def getNJet( event, sample ):
 def getJets( event, sample ):
     allJets = []
     for i in range(event.nJet):
-        allJets.append({'pt':event.Jet_pt[i] if year==2016 else event.Jet_pt_nom[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmaskMETSig[i], 'neHEF':event.Jet_neHEF[i]})
+        allJets.append({'pt':event.Jet_pt[i] if args.year==2016 else event.Jet_pt_nom[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmaskMETSig[i], 'neHEF':event.Jet_neHEF[i]})
 
     highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<5.0 and j['jetId']>5 and j['cleanmask']>0), allJets )
 
@@ -412,12 +410,12 @@ sequence += [ getJets ]
 if args.calcMETSig:
     sequence += [ calcMETSig ]
 sequence += [getNJet]
-if year == 2017:
+if args.year == 2017:
     sequence += [ getMET_neEmEBalace, getSoftJetWeight ]
 
 def getLeptonSelection( mode ):
   if   mode=="mumu":
-    if year == 2016:
+    if args.year == 2016:
         return cutInterpreter.cutString("diMuon16")
     else:
         # slower trigger turn-on in 2017&2018
@@ -435,7 +433,7 @@ for index, mode in enumerate(allModes):
   yields[mode] = {}
   if   mode=="mumu":
     data_sample.texName = "data (2 #mu)"
-    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
+    data_selectionString = '&&'.join([getFilterCut(isData=True, year=args.year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
     # maybe add singleMu backup
     print data_selectionString
     data_sample.setSelectionString([data_selectionString])
@@ -464,7 +462,7 @@ for index, mode in enumerate(allModes):
         sample.weight         = lambda event, sample: event.puWeightUp
     else:
         sample.weight         = lambda event, sample: event.puWeight
-    sample.setSelectionString([getFilterCut(isData=False, year=year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
+    sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
 
   if not args.noData:
     stack = Stack(mc, data_sample)
@@ -513,7 +511,7 @@ for index, mode in enumerate(allModes):
       binning=[400/20,0,400],
   ))
 
-  if year == 2018:
+  if args.year == 2018:
     plots.append(Plot(
       texX = 'E_{T}^{miss} (GeV) (V19)', texY = 'Number of Events / 20 GeV',
       attribute = TreeVariable.fromString( "MET_pt_nom/F" ),
@@ -526,7 +524,7 @@ for index, mode in enumerate(allModes):
       binning=[400/20,0,400],
   ))
 
-  if year == 2017:
+  if args.year == 2017:
     #METFixEE2017_pt
     
     plots.append(Plot(
@@ -548,7 +546,7 @@ for index, mode in enumerate(allModes):
       binning= [50,0,100],
   ))
 
-  if year == 2018:
+  if args.year == 2018:
     plots.append(Plot(
       texX = 'E_{T}^{miss} recorr', texY = 'Number of Events',
       attribute = TreeVariable.fromString('MET_pt_nom/F'),
@@ -681,7 +679,7 @@ for index, mode in enumerate(allModes):
     binning=[50,-5.0,5.0],
   ))
 
-  if year == 2017:
+  if args.year == 2017:
     plots.append(Plot(
       texX = 'N_{j} (EE)', texY = 'Number of Events',
       name = 'nJet_EE',
@@ -859,7 +857,7 @@ for index, mode in enumerate(allModes):
     for log in [True, False]:
         plotting.draw2D(
             plot = plot,
-            plot_directory = os.path.join(plot_directory, 'analysis_plots', str(year), args.plot_directory, mode + ("_log" if log else ""), args.selection),
+            plot_directory = os.path.join(plot_directory, 'analysisPlots', str(args.year), args.plot_directory, args.selection, mode, "log" if log else "lin"),
             logX = False, logY = False, logZ = log,
             drawObjects = drawObjects( not args.noData, dataMCScale , lumi_scale ),
             copyIndexPHP = True

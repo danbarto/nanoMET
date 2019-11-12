@@ -4,6 +4,7 @@ Tuning of MetSig
 
 # Standard imports
 import ROOT
+ROOT.gROOT.SetBatch(True)
 import os
 import sys
 import math
@@ -103,7 +104,7 @@ version         = postProcessing_directory.split("/")[0]
 outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i_%s"%("Data" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig, version)
 
 # run
-r = run(samples, sel, JR, outfile=outfile, maxN=3e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, puWeight="puWeight", ttbarModifier=args.ttbarModifier, pTdepMetSig=args.pTdependent)
+r = run(samples, sel, JR, outfile=outfile, maxN=1e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, puWeight="puWeight", ttbarModifier=args.ttbarModifier, pTdepMetSig=args.pTdependent)
 LL = r.getLL(r.defaultStart)
 r.minimize(start=r.defaultStart, maxSig=args.maxSig)
 

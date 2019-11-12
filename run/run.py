@@ -134,10 +134,10 @@ class run:
         gmin.Minimize()
         gmin.Hesse()
         
-#        pars = [ gmin.X()[i]      for i in range(self.paramRange) ]
-#        uncs = [ gmin.Errors()[i] for i in range(self.paramRange) ]
-        pars = map( float, gmin.X() )
-        uncs = map( float, gmin.Errors() )
+        pars = [ gmin.X()[i]      for i in range(self.paramRange) ]
+        uncs = [ gmin.Errors()[i] for i in range(self.paramRange) ]
+#        pars = map( float, gmin.X() )
+#        uncs = map( float, gmin.Errors() )
         
         with open(self.outfile+".txt", "w") as of:
             json.dump(pars, of)
