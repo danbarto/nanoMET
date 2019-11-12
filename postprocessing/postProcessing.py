@@ -12,9 +12,9 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel       import C
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop       import Module
 
 # Import modules
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer       import puWeightProducer, pufile_data2016, pufile_mc2016, pufile_data2017, pufile_data2018, pufile_mc2017, pufile_mc2018
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer            import METSigProducer
-from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, pufile_data2016, pufile_mc2016, pufile_data2017, pufile_data2018, pufile_mc2017, pufile_mc2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.METSigProducer      import METSigProducer
+from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2    import *
 
 # private modules
 from METSigTools           import METSigTools
@@ -35,19 +35,22 @@ argParser.add_argument('--year',        action='store', default=None, help="Whic
 argParser.add_argument('--era',         action='store', default="v1", help="Which era/subdirectory?")
 options = argParser.parse_args()
 
-import nanoMET.tools.logger as _logger
-logger = _logger.get_logger(options.logLevel, logFile = None)
+# Logger
+import nanoMET.tools.logger as logger
+import RootTools.core.logger as logger_rt
+logger    = logger.get_logger(   args.logLevel, logFile = None)
+logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 # from RootTools
 from RootTools.core.standard            import *
 
 def nonEmptyFile(f, treeName='Events'):
-    print "Checking file: %s"%f
+    logger.info("Checking file: %s"%f)
     rf = ROOT.TFile.Open(f)
     if not rf: return False
     tree = getattr(rf, treeName)
     nonEmpty = True if tree.GetEntries() else False
-    if not nonEmpty: print "File is empty"
+    if not nonEmpty: logger.info("File is empty")
     rf.Close()
     return nonEmpty
 
@@ -71,7 +74,7 @@ elif year == 2018:
     from Samples.nanoAOD.Run2018_17Sep2018_private import allSamples as Run2018_17Sep2018_private
     allSamples = Autumn18_private_legacy_v1 + Run2018_17Sep2018_private
 
-print "Searching for sample %s"%options.samples[0]  
+logger.info("Searching for sample %s"%options.samples[0])
 
 samples = []
 for selectedSample in options.samples:
@@ -100,14 +103,14 @@ elif len(samples)==1:
 else:
     raise ValueError( "Need at least one sample. Got %r",samples )
 
-#logger.info("Sample contains %s files", len(sample.files))
+logger.info("Sample contains %s files", len(sample.files))
 sample.files = sorted(sample.files) # in order to avoid some random ordered file list, different in each job
 
 if sample.isData:
     era = extractEra(samples[0].name)[-1]
 else:
     era = None
-print "######### Era %s ########"%era
+logger.info("######### Era %s ########"%era)
 
 # calculate the lumi scale factor for the weight
 targetLumi = 1000.
@@ -120,13 +123,12 @@ keepSampleName = sample.name # to mitigate Mateusz change of naming convention
 
 # filebased job splitting
 len_orig = len(sample.files)
-#logger.info("Sample has %s files", len_orig)
+logger.info("Sample has %s files", len_orig)
 json = sample.json # pickup json from sample, as defined in the Sample repository
 sample = sample.split( n=options.nJobs, nSub=options.job)
 sample.name = keepSampleName
 
 logger.info("Will run over %s files", len(sample.files))
-#logger.info("Running over files %s", sample.files)
 
 # Put together skim
 isDiMuon        = options.skim.lower().startswith('dimuon')
@@ -217,15 +219,13 @@ elif year == 2018:
 
 
 unclEnThreshold = 15
-metSigParams    = metSigParamsMC                if not sample.isData else metSigParamsData
+metSigParams    = metSigParamsMC if not sample.isData else metSigParamsData
 METCollection   = "METFixEE2017" if year == 2017 else "MET"
 
 vetoEtaRegion = (2.65, 3.14) if year == 2017 else (10,10)
 
-print vetoEtaRegion
-
 METBranchName = 'MET' if not year == 2017 else 'METFixEE2017'
-JMECorrector = createJMECorrector(isMC=(not sample.isData), dataYear=year, runPeriod=era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=METBranchName, isFastSim=False)
+JMECorrector = createJMECorrector(isMC=(not sample.isData), dataYear=year, runPeriod=era, jesUncert="Total", jetType = "AK4PFchs", metBranchName=METBranchName, isFastSim=False, applySmearing=False)
 modules = [
     JMECorrector()
 ]
