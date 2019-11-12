@@ -16,12 +16,13 @@ def cartesian(pt, phi):
     return (pt*math.cos(phi), pt*math.sin(phi))
 
 class Event:
-    def __init__(self, event, jetResolution, weightModifier=1, METPtVar="MET_pt", METPhiVar="MET_phi", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15., puWeight="puWeight"):
+    def __init__(self, event, jetResolution, weightModifier=1, METPtVar="MET_pt", METPhiVar="MET_phi", JetCollection="Jet_pt", isData=False, vetoEtaRegion=(10,10), jetThreshold=15., puWeight="puWeight", pTdepMetSig=True):
         jetResolution.getJER(event, JetCollection=JetCollection)
 
-        self.nJet       = event.nJet
+        self.nJet        = event.nJet
+        self.pTdepMetSig = pTdepMetSig
         # The preliminary conclusion on jet/lepton cleaning is: use simple deltaR cleaning of jets against electrons/muons/photons
-        cleanJetIndices = [ i for i,x in enumerate(event.Jet_cleanmaskMETSig) if x>0 ]
+        cleanJetIndices  = [ i for i,x in enumerate(event.Jet_cleanmaskMETSig) if x>0 ]
         
         # only use jets above threshold and outside a veto region
         acceptedJetIndices  = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]>jetThreshold and not (vetoEtaRegion[0] < abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ]
@@ -87,7 +88,8 @@ class Event:
             
 
         # unclustered energy
-        cov_tt = args[10]*args[10] + args[11]*args[11]*self.MET_sumPt
+        ind    = 10 if self.pTdepMetSig else 5
+        cov_tt = args[ind]*args[ind] + args[ind+1]*args[ind+1]*self.MET_sumPt
         cov_xx += cov_tt
         cov_yy += cov_tt
 
