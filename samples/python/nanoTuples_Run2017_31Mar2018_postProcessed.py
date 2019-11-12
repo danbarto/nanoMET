@@ -3,8 +3,8 @@ from RootTools.core.Sample import Sample
 import ROOT
 
 ## Logging
-#import logging
-#logger = logging.getLogger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 # Data directory
 try:    data_directory = sys.modules['__main__'].data_directory
@@ -12,9 +12,9 @@ except: from nanoMET.tools.user import data_directory
 
 # Take post processing directory if defined in main module
 try:    postProcessing_directory = sys.modules['__main__'].postProcessing_directory
-except: postProcessing_directory = '2017_v11/dimuon/'
+except: postProcessing_directory = '2017_v21/dimuon/'
 
-#logger.info("Loading data samples from directory %s", os.path.join(data_directory, postProcessing_directory))
+logger.info("Loading data samples from directory %s", os.path.join(data_directory, postProcessing_directory))
 
 dirs = {}
 for (r, version) in [('B',''),('C',''),('D',''),('E',''),('F','')]:
@@ -34,7 +34,6 @@ for key in dirs:
 
 
 def getSample(pd, runName, lumi):
-    print pd, runName, dirs[pd + '_' + runName]
     sample      = Sample.fromDirectory(name=(pd + '_' + runName), treeName="Events", texName=(pd + ' (' + runName + ')'), directory=dirs[pd + '_' + runName])
     sample.lumi = lumi
     return sample
