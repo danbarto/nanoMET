@@ -1,0 +1,28 @@
+#runNotifier.sh "python tune_Summer16.py --pTdependent --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Fall17.py   --pTdependent --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Autumn18.py --pTdependent --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2016.py  --pTdependent --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2017.py  --pTdependent --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2018.py  --pTdependent --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+
+runNotifier.sh "python tune_Summer16.py --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+runNotifier.sh "python tune_Fall17.py   --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+runNotifier.sh "python tune_Autumn18.py --maxSig 25 --jetThreshold 15 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+runNotifier.sh "python tune_Run2016.py  --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+runNotifier.sh "python tune_Run2017.py  --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+runNotifier.sh "python tune_Run2018.py  --maxSig 25 --jetThreshold 15 >> /dev/null 2>>tune.err"
+
+#runNotifier.sh "python tune_Summer16.py --pTdependent --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Fall17.py   --pTdependent --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Autumn18.py --pTdependent --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2016.py  --pTdependent --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2017.py  --pTdependent --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2018.py  --pTdependent --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+
+#runNotifier.sh "python tune_Summer16.py --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Fall17.py   --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Autumn18.py --maxSig 25 --jetThreshold 25 --ttbarModifier 1 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2016.py  --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2017.py  --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+#runNotifier.sh "python tune_Run2018.py  --maxSig 25 --jetThreshold 25 >> /dev/null 2>>tune.err"
+
