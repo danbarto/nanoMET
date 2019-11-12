@@ -25,21 +25,21 @@ class Event:
         cleanJetIndices  = [ i for i,x in enumerate(event.Jet_cleanmaskMETSig) if x>0 ]
         
         # only use jets above threshold and outside a veto region
-        acceptedJetIndices  = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]>jetThreshold and not (vetoEtaRegion[0] < abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ]
-        lowPtJetIndices     = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]<jetThreshold and not (vetoEtaRegion[0] < abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ] # EE stuff (if rejected) shouldn't be used for anything
+        acceptedJetIndices  = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]>=jetThreshold and not (vetoEtaRegion[0] <= abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ]
+        lowPtJetIndices     = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]<jetThreshold  and not (vetoEtaRegion[0] <= abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ] # EE stuff (if rejected) shouldn't be used for anything
 
-        self.Jet_pt     = [ getattr(event, JetCollection)[i]     for i in acceptedJetIndices ]
-        self.Jet_eta    = [ event.Jet_eta[i]    for i in acceptedJetIndices ]
-        self.Jet_etabin = [ getBin(abs(x))      for x in self.Jet_eta ]
-        self.Jet_phi    = [ event.Jet_phi[i]    for i in acceptedJetIndices ]
-        self.Jet_dpt    = [ event.Jet_dpt[i]    for i in acceptedJetIndices ]
-        self.Jet_dphi   = [ event.Jet_dphi[i]   for i in acceptedJetIndices ]
+        self.Jet_pt     = [ getattr(event, JetCollection)[i] for i in acceptedJetIndices ]
+        self.Jet_eta    = [ event.Jet_eta[i]                 for i in acceptedJetIndices ]
+        self.Jet_etabin = [ getBin(abs(x))                   for x in self.Jet_eta ]
+        self.Jet_phi    = [ event.Jet_phi[i]                 for i in acceptedJetIndices ]
+        self.Jet_dpt    = [ event.Jet_dpt[i]                 for i in acceptedJetIndices ]
+        self.Jet_dphi   = [ event.Jet_dphi[i]                for i in acceptedJetIndices ]
 
-        self.MET_pt             = getattr(event, METPtVar)
-        self.MET_phi            = getattr(event, METPhiVar)
-        self.MET_sumPt          = getattr(event, "MET_sumPt")
+        self.MET_pt     = getattr(event, METPtVar)
+        self.MET_phi    = getattr(event, METPhiVar)
+        self.MET_sumPt  = getattr(event, "MET_sumPt")
         
-        sumPt_lowPtJet = sum( [ getattr(event, JetCollection)[x] for x in lowPtJetIndices ] )
+        sumPt_lowPtJet  = sum( [ getattr(event, JetCollection)[x] for x in lowPtJetIndices ] )
         self.MET_sumPt += sumPt_lowPtJet
 
         self.fixedGridRhoFastjetAll = event.fixedGridRhoFastjetAll
@@ -72,15 +72,15 @@ class Event:
             j_sigmapt   = self.Jet_dpt[i]
             j_sigmaphi  = self.Jet_dphi[i]
             index       = self.Jet_etabin[i]
-            jet_index = 0 if j_pt < 40 else 1
+            jet_index   = 0 if j_pt < 40 else 1
 
-            cj = math.cos(j_phi)
-            sj = math.sin(j_phi)
-            dpt = args[2*index + jet_index] * j_pt * j_sigmapt
-            dph =               j_pt * j_sigmaphi
+            cj      = math.cos(j_phi)
+            sj      = math.sin(j_phi)
+            dpt     = args[2*index + jet_index if self.pTdepMetSig else index] * j_pt * j_sigmapt
+            dph     = j_pt * j_sigmaphi
 
-            dpt *= dpt
-            dph *= dph
+            dpt    *= dpt
+            dph    *= dph
 
             cov_xx += dpt*cj*cj + dph*sj*sj
             cov_xy += (dpt-dph)*cj*sj

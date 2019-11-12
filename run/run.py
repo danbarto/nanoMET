@@ -165,9 +165,9 @@ if __name__ == "__main__":
 
     # define setting
     selection       = "diMuon-looseLeptonVeto-onZ"
-    samples         = [DY_LO_16]#, Top_16, diboson_16, rare_16]
+    samples         = [DY_LO_16, Top_16, diboson_16, rare_16]
     for s in samples:
-        s.reduceFiles( to=1 )
+        s.reduceFiles( to=5 )
     trigger         = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL", "HLT_IsoMu24", "HLT_IsoTkMu24"]
     jer             = "Summer16_25nsV1_MC"
     METPtVar        = "MET_pt_nom"
@@ -178,6 +178,7 @@ if __name__ == "__main__":
     ttbarModifier   = 1
     maxSig          = 25
     jetThreshold    = 15
+    pTdepMetSig     = False
 
     # calculate setting
     preselection    = cutInterpreter.cutString(selection)
@@ -186,10 +187,10 @@ if __name__ == "__main__":
     sel             = "&&".join([preselection, triggerSel, eventfilter])
     JR              = JetResolution(jer)
     version         = postProcessing_directory.split("/")[0]
-    outfile         = "results/tune_%s_%s_puWeight_sumPt%i_max%i_ttbar%i_%s"%(jer,selection,jetThreshold,maxSig,ttbarModifier,version)
+    outfile         = "results/test_tune_%s_%s_puWeight_sumPt%i_max%i_ttbar%i_%s"%(jer,selection,jetThreshold,maxSig,ttbarModifier,version)
 
-    r = run(samples, sel, JR, outfile=outfile, maxN=1e3, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold, puWeight="puWeight", ttbarModifier=ttbarModifier)
+    r = run(samples, sel, JR, outfile=outfile, maxN=3e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold, puWeight="puWeight", ttbarModifier=ttbarModifier, pTdepMetSig=pTdepMetSig)
     LL = r.getLL(r.defaultStart)
-    r.minimize(start=r.defaultStart, maxSig=maxSig)
+    if minimize:
+        r.minimize(start=r.defaultStart, maxSig=maxSig)
 
-    if minimize: r.minimize()
