@@ -8,6 +8,9 @@ nohup.out
 # C extensions
 *.so
 
+core/data/JER/JRDatabase/
+run/results/
+
 # Distribution / packaging
 .Python
 build/
