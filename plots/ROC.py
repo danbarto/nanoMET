@@ -1,65 +1,58 @@
 #!/usr/bin/env python
 ''' Analysis script for standard plots
 '''
-#
 # Standard imports and batch mode
-#
 import ROOT, os
 ROOT.gROOT.SetBatch(True)
 import itertools
 import numpy
 
 from math                               import sqrt, cos, sin, pi
+
 from RootTools.core.standard            import *
+
 from nanoMET.tools.user                 import plot_directory
-from nanoMET.samples.color              import color
 from nanoMET.tools.puReweighting        import getReweightingFunction
 from nanoMET.tools.cutInterpreter       import cutInterpreter
-from Samples.Tools.metFilters           import getFilterCut
+from nanoMET.tools.metFilters           import getFilterCut
 from nanoMET.tools.helpers              import deltaPhi
-#from nanoMET.tools.cutInterpreter  import cutInterpreter
 
-#
+from nanoMET.samples.color              import color
+
+from nanoMET.core.JetResolution         import *
+from nanoMET.core.Event                 import Event
+
+
 # Arguments
-# 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',            action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--noData',              action='store_true', default=False,           help='also plot data?')
-argParser.add_argument('--small',               action='store_true',     help='Run only on a small subset of the data?', )
-argParser.add_argument('--verySmall',               action='store_true',     help='Run only on a small subset of the data?', )
+argParser.add_argument('--small',               action='store_true', help='Run only on a small subset of the data?', )
+argParser.add_argument('--verySmall',           action='store_true', help='Run only on a small subset of the data?', )
 argParser.add_argument('--plot_directory',      action='store',      default='v1')
-argParser.add_argument('--year',                action='store',      default=2016)
-argParser.add_argument('--selection',           action='store',      default='njet1p-looseLeptonVeto-onZ')
+argParser.add_argument('--year',                action='store',      default=2016, type=int)
+argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ-nCleanJet1p')
 args = argParser.parse_args()
 
-
-
-year = int(args.year)
-#
 # Logger
-#
 import StopsDilepton.tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-from nanoMET.core.JetResolution import *
-from nanoMET.core.Event         import Event
+if args.small:     args.plot_directory += "_small"
+if args.verySmall: args.plot_directory += "_verySmall"
+if args.noData:    args.plot_directory += "_noData"
 
-if args.small:                        args.plot_directory += "_small"
-if args.verySmall:                        args.plot_directory += "_verySmall"
-if args.noData:                       args.plot_directory += "_noData"
-#
 # Make samples, will be searched for in the postProcessing directory
-#
 if year == 2016:
-    postProcessing_directory = "2016_v6/dimuon/"
+    postProcessing_directory = "2016_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v6/dimuon/"
+    postProcessing_directory = "2016_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
     data_sample = DoubleMuon_Run2016
-    mc          = [DY_LO_16, Top_16, VVTo2L2Nu_16, WJets_16]
+    mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
     dy          = DY_LO_16
     top         = Top_16
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
@@ -70,39 +63,38 @@ if year == 2016:
     paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
 
 elif year == 2017:
-    postProcessing_directory = "2017_v6/dimuon/"
+    postProcessing_directory = "2017_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v6/dimuon/"
+    postProcessing_directory = "2017_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
-    mc          = [DY_LO_17, Top_17, VVTo2L2Nu_17, WJets_17]
+    mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
     dy          = DY_LO_17
     top         = Top_17
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
-    JERData     = JetResolution('Fall17_25nsV1_DATA')
-    JERMC       = JetResolution('Fall17_25nsV1_MC')
+    JERData     = JetResolution('Fall17_V3_DATA')
+    JERMC       = JetResolution('Fall17_V3_MC')
     paramsData  = [1.743319492995906, 1.6882972548344242, 1.6551185757422577, 1.4185872885319166, 1.5923201986159454, -0.0002185734915505621, 0.6558819144933438]
     paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
     
 elif year == 2018:
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v6/dimuon/"
+    postProcessing_directory = "2018_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
-    mc          = [DY_LO_18, Top_18]#, VVTo2L2Nu_18, WJets_18]
+    mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
     dy          = DY_LO_18
     top         = Top_18
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
-    JERData     = JetResolution('Fall17_25nsV1_DATA')
-    JERMC       = JetResolution('Fall17_25nsV1_MC')
+    JERData     = JetResolution('Autumn18_V1_DATA')
+    JERMC       = JetResolution('Autumn18_V1_MC')
     paramsData  = [1.8901832149541773, 2.026001195551111, 1.7805585857080317, 1.5987158841135176, 1.4509516794588302, 0.0003365079273751142, 0.6697617770737838]
     paramsMC    = [1.3889924894064565, 1.4100950862040742, 1.388614360360041, 1.2352876826748016, 1.0377595808114612, 0.004479319982990152, 0.6269386702181299]
-#
+
 # Text on the plots
-#
 def drawObjects( plotData, dataMCScale, lumi_scale ):
     tex = ROOT.TLatex()
     tex.SetNDC()
@@ -135,10 +127,12 @@ def drawPlots(plots, mode, dataMCScale):
         copyIndexPHP = True,
       )
 
-#
 # Read variables and sequences
-#
-read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]", "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F,jetId/I]", "nJet/I", "GenMET_pt/F", "PV_npvsGood/I"]
+read_variables = ["weight/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F",
+                  "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F]",
+                  "Jet[pt/F,eta/F,phi/F,cleanmask/I,cleanmaskMETSig/I,neEmEF/F,jetId/I]",
+                  "nJet/I", "GenMET_pt/F", "PV_npvsGood/I"
+                 ]
 
 sequence = []
 
@@ -168,19 +162,17 @@ def calcHT( event, sample ):
 sequence += [ calcMETSig, calcHT ]
 
 def getLeptonSelection( mode ):
-  if   mode=="mumu":
-    if year == 2016:
-        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>25&&Muon_isGoodMuon)>0"
-    else:
-        # slower trigger turn-on in 2017&2018
-        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0"
+    if mode=="mumu":
+        if year == 2016:
+            return cutInterpreter.cutString("diMuon16")
+        else:
+            # slower trigger turn-on in 2017&2018
+            return cutInterpreter.cutString("diMuon1718")
 
 nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc="Summer16")
 nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc="Summer16")
 
-#
 # Loop over channels
-#
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu']
@@ -196,7 +188,7 @@ for index, mode in enumerate(allModes):
       sample.scale          = lumi_scale
       sample.read_variables = ['puWeight/F','Pileup_nTrueInt/F']
       sample.weight         = lambda event, sample: event.puWeight
-      sample.setSelectionString([getFilterCut(isData=False, year=year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
+      sample.setSelectionString([getFilterCut(isData=False, year=year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
 
     stack = Stack(mc)
 
@@ -278,8 +270,6 @@ for index, mode in enumerate(allModes):
     ))
 
     plotting.fill( plots2D + [dummyPlot], read_variables = read_variables, sequence = sequence)
-
-
 
     for plot in plots2D:
       for log in [True, False]:

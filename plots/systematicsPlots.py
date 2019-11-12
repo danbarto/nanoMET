@@ -11,39 +11,34 @@ from math                           import sqrt, cos, sin, pi
 from RootTools.core.standard        import *
 from RootTools.plot.helpers         import copyIndexPHP
 from nanoMET.tools.user             import plot_directory
-from Samples.Tools.metFilters       import getFilterCut
+from nanoMET.tools.metFilters       import getFilterCut
 from nanoMET.tools.cutInterpreter   import cutInterpreter
 from nanoMET.tools.lock             import waitForLock, removeLock
 
 import pickle, os, time
 import errno
-#
+
 # Arguments
-# 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',          action='store',      default='INFO',     nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--signal',            action='store',      default='None',        nargs='?', choices=['None', 'ewkDM'], help="Add signal to plot")
-argParser.add_argument('--noData',            action='store_true', default=False,       help='also plot data?')
+argParser.add_argument('--signal',            action='store',      default='None',     nargs='?', choices=['None', 'ewkDM'], help="Add signal to plot")
+argParser.add_argument('--noData',            action='store_true', default=False,                                            help='also plot data?')
 argParser.add_argument('--plot_directory',    action='store',      default='v1')
-argParser.add_argument('--selection',         action='store',            default='looseLeptonVeto-onZ')
+argParser.add_argument('--selection',         action='store',      default='looseLeptonVeto-onZ')
 argParser.add_argument('--selectSys',         action='store',      default='all')
-#argParser.add_argument('--noMultiThreading',  action='store_true', default='False', help="noMultiThreading?") # Need no multithreading when doing batch-to-natch
 argParser.add_argument('--showOnly',          action='store',      default=None)
-argParser.add_argument('--skipJER',           action='store_true',      default=False)
-argParser.add_argument('--skipUnclEn',        action='store_true',      default=False)
-argParser.add_argument('--small',             action='store_true',     help='Run only on a small subset of the data?', )
-argParser.add_argument('--runLocal',             action='store_true',     help='Run local or submit?', )
+argParser.add_argument('--skipJER',           action='store_true', default=False)
+argParser.add_argument('--skipUnclEn',        action='store_true', default=False)
+argParser.add_argument('--small',             action='store_true',                      help='Run only on a small subset of the data?', )
+argParser.add_argument('--runLocal',          action='store_true',                      help='Run local or submit?', )
 argParser.add_argument('--isChild',           action='store_true', default=False)
 argParser.add_argument('--normalizeBinWidth', action='store_true', default=False,       help='normalize wider bins?')
 argParser.add_argument('--dryRun',            action='store_true', default=False,       help='do not launch subjobs')
-argParser.add_argument("--year",              action='store', type=int,      default=2016, choices = [ 2016, 2017, 2018 ], help='Which year?')
+argParser.add_argument("--year",              action='store', type=int, default=2016, choices = [ 2016, 2017, 2018 ], help='Which year?')
 args = argParser.parse_args()
 
-
-#
 # Logger
-#
 import nanoMET.tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
@@ -54,9 +49,7 @@ bJetSelectionM  = "nBTag"
 
 logger.info("Starting")
 
-#
 # Systematics to run over
-#
 jet_systematics    = ['jesTotalUp','jesTotalDown']
 if not args.skipJER:
     jet_systematics += ['jerUp', 'jerDown']
@@ -66,7 +59,6 @@ weight_systematics = ['puWeightUp', 'puWeightDown']
 
 if args.selectSys != "all" and args.selectSys != "combine": all_systematics = [args.selectSys if args.selectSys != 'None' else None]
 else:                                                       all_systematics = [None] + weight_systematics + jme_systematics
-#else:                                                       all_systematics = [None] + jet_systematics
 
 
 sys_pairs = [\
@@ -82,15 +74,11 @@ if not args.skipJER:
         ('JER',         'jerUp', 'jerDown'),
     ]
 
-#
 # If this is the mother process, launch the childs and exit (I know, this could potententially be dangereous if the --isChild and --selection commands are not given...)
-#
-
 def wrapper(com):
   import os
   os.system(com)
 
-#if not args.isChild and args.selection is None and (args.selectSys == "all" or args.selectSys == "combine"):
 if not args.isChild and (args.selectSys == "all" or args.selectSys == "combine"):
   jobs = []
   for sys in (all_systematics if args.selectSys == "all" else ["combine"]):
@@ -126,14 +114,11 @@ year = int(args.year)
 try: os.makedirs(os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory))
 except: pass
 
-#
 # Make samples, will be searched for in the postProcessing directory
-#
-
 if year == 2016:
-    postProcessing_directory = "2016_v20/dimuon/"
+    postProcessing_directory = "2016_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v20/dimuon/"
+    postProcessing_directory = "2016_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
     data_sample = DoubleMuon_Run2016
     mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
@@ -142,9 +127,9 @@ if year == 2016:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
 
 elif year == 2017:
-    postProcessing_directory = "2017_v15/dimuon/"
+    postProcessing_directory = "2017_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v15/dimuon/"
+    postProcessing_directory = "2017_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
@@ -153,9 +138,9 @@ elif year == 2017:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
 elif year == 2018:
-    postProcessing_directory = "2018_v19_2/dimuon/"
+    postProcessing_directory = "2018_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v19_1/dimuon/"
+    postProcessing_directory = "2018_v21/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
@@ -164,9 +149,7 @@ elif year == 2018:
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
 
 
-#
 # Text on the plots
-#
 def drawObjects( plotData, dataMCScale, lumi_scale ):
     tex = ROOT.TLatex()
     tex.SetNDC()
@@ -189,9 +172,6 @@ def weightMC( sys = None ):
     # weights used right now: PU, BTag, trigger, tracking
     if sys is None:
         return (lambda event, sample:event.weight*event.puWeight, "weight * puWeight")
-        #weight_ = lambda event, sample: event.puWeight
-        #return (staticmethod(weight_), "puWeight")#event.weight*event.puWeight,"weight * puWeight")
-        #return weight_
     elif 'puWeight' in sys:
         return (lambda event, sample:event.weight*getattr(event, sys), "weight * "+sys)
     elif sys in jme_systematics :
@@ -199,36 +179,29 @@ def weightMC( sys = None ):
     else:
         raise ValueError( "Systematic %s not known"%sys )
     
-#
 # Read variables and sequences
-#
 read_variables = ["weight/F", "Jet[pt/F,eta/F,phi/F,pt_nom/F]",
                   "MET_pt/F", "MET_phi/F",# "MET_pt_nom/F", "MET_phi_nom/F"
                   ]
 
 sequence = []
 
-
 def getLeptonSelection( mode ):
   if   mode=="mumu":
     if year == 2016:
-        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>25&&Muon_isGoodMuon)>0"
+        return cutInterpreter.cutString("diMuon16")
     else:
         # slower trigger turn-on in 2017&2018
-        return "Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0"
+        return cutInterpreter.cutString("diMuon1718")
 
-
-#
 # Loop over channels
-#
 allPlots   = {}
 allModes   = ['mumu']
 for index, mode in enumerate(allModes):
     logger.info("Modes")
     logger.info('Working on mode ' + str(mode))
 
-
-    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year).replace('&&weight>0',''), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
+    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
     data_sample.setSelectionString([data_selectionString])
     data_sample.scale = 1
 
@@ -244,14 +217,8 @@ for index, mode in enumerate(allModes):
 
 
     if args.small:
-        for sample in mc + [data_sample]:# + ([data_sample] if type(data_sample)!=type([]) else data_sample):
+        for sample in mc + [data_sample]:
             sample.reduceFiles( factor = 40 )
-
-    #def weightMC2( ):
-    #    def func( event, sample ):
-    #        return event.weight
-    #    return func
-    #weight_ = weightMC2()
 
     weight_ = lambda event,sample: event.weight
 
@@ -260,7 +227,6 @@ for index, mode in enumerate(allModes):
         sample.style           = styles.fillStyle(sample.color, lineColor = sample.color)
         sample.read_variables  = ["puWeight/F"]
         sample.read_variables += ["%s/F"%s for s in weight_systematics]
-        #sample.read_variables += ["Jet_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_%s/F"%s   for s in jet_systematics]# + ["MET_pt_min_%s/F"%s   for s in jet_systematics]
         if year == 2017:
             sample.read_variables += ["METFixEE2017_pt_nom/F"]
             sample.read_variables += ["METFixEE2017_pt_%s/F"%s   for s in jet_systematics]
@@ -269,12 +235,9 @@ for index, mode in enumerate(allModes):
             sample.read_variables += ["MET_pt_nom/F"]
             sample.read_variables += ["MET_pt_%s/F"%s   for s in jet_systematics]
             sample.read_variables += ["MET_pt_%s/F"%s   for s in met_systematics]
-        #sample.read_variables += ["MET_pt_%s/F"%s   for s in jet_systematics] + ["MET_pt_min_%s/F"%s    for s in jet_systematics] + ["MET_significance_%s/F"%s    for s in jet_systematics]
         sample.read_variables += ["MET_significance_%s/F"%s    for s in jet_systematics]
         sample.read_variables += ["MET_significance_%s/F"%s    for s in met_systematics]
 
-        #sample.setWeightString("weight*puWeight")
-        #sample.weight = lambda event, sample: event.puWeight
         sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
 
     # Use some defaults
@@ -286,7 +249,6 @@ for index, mode in enumerate(allModes):
     sys_stacks = {sys:copy.deepcopy(stack_mc) for sys in [None] + weight_systematics + jme_systematics }
     plots = []
   
-
     if year == 2016 or year == 2018:
         ## MET_pt
         if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
@@ -412,42 +374,10 @@ for index, mode in enumerate(allModes):
             )
     plots.extend( met_sig_mc_fine.values() )
 
-    ### MET_pt_min
-    #if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
-    #    met_min_data  = Plot(
-    #        name            = "MET_pt_min_data",
-    #        texX            = 'E_{T}^{miss,min} (GeV)',
-    #        texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
-    #        stack           = stack_data,
-    #        attribute       = TreeVariable.fromString( "MET_pt_min/F" ),
-    #        binning         = [20,0,400],
-    #        selectionString = cutInterpreter.cutString(args.selection),
-    #        weight          = data_weight,
-    #        )
-    #    plots.append( met_min_data )
-    #else:
-    #    met_min_data = None
-
-    #met_min_mc = {}
-    #for sys in all_systematics:
-    #    met_min_mc[sys] = Plot(
-    #        name            = "MET_pt_min" if sys is None else "MET_pt_min_mc_%s" % sys,
-    #        texX            = 'E_{T}^{miss,min} (GeV)',
-    #        texY            = 'Number of Events' if args.normalizeBinWidth else "Number of Event / 20 GeV",
-    #        stack           = sys_stacks[sys],
-    #        attribute       = TreeVariable.fromString('MET_pt_min/F') if sys not in jme_systematics else TreeVariable.fromString( "MET_pt_min_%s/F" % sys ),
-    #        binning         = [20,0,400],
-    #        selectionString = addSys(cutInterpreter.cutString(args.selection), sys),
-    #        weight          = weightMC(sys)[0]#weight_,#lambda event, sample: int(1),
-    #        )
-    #plots.extend( met_min_mc.values() )
-
-
     plotConfigs = [\
             [ met_mc, met_data, 1],
             [ met_sig_mc, met_sig_data, 1],
             [ met_sig_mc_fine, met_sig_data_fine, 1],
-            #[ met_min_mc, met_min_data, 1],
 
     ]
 
@@ -574,8 +504,6 @@ for index, mode in enumerate(allModes):
                     ratio = {'yRange':(0.1,1.9), 'drawObjects':ratio_boxes}
             else:
                 ratio = None
-            #print "plot.histos[0][pos_top].Integral()", pos_top,plot.histos 
-            #print "plot.histos[0][pos_top].Integral()", plot.histos[0][pos_top].Integral()    
             for log in [False, True]:
                 postFix = '_noJER' if args.skipJER else ''
                 postFix += '_noUnclEn' if args.skipUnclEn else ''
@@ -587,7 +515,6 @@ for index, mode in enumerate(allModes):
                     legend = (0.50,0.88-0.04*sum(map(len, plot.histos)),0.95,0.88),
                     logX = False, logY = log, sorting = True,
                     yRange = (0.03, "auto"),
-                    #drawObjects = drawObjects( True, top_sf[None], lumi_scale ) + boxes,
                     drawObjects = drawObjects( True, 1, lumi_scale ) + boxes,
                     copyIndexPHP = True
                 )

@@ -1,32 +1,31 @@
 ''' Analysis script for 1D 2l plots (RootTools)
 '''
 
-#Standard imports
+# Standard imports
 import ROOT
-from math import sqrt, cos, sin, pi, acos
-import itertools,os
+import os
 import copy
+import itertools
+from math import sqrt, cos, sin, pi, acos
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--small', action='store_true', help='Small?')
+argParser.add_argument('--logLevel',  action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
+argParser.add_argument('--small',     action='store_true', help='Small?')
 args = argParser.parse_args()
 
-
-#RootTools
+# RootTools
 from RootTools.core.standard import *
 
 data_directory              = "/afs/hephy.at/data/dspitzbart03/nanoAOD/"
 postProcessing_directory    = "dimuon/"
 plot_directory              = "/afs/hephy.at/user/d/dspitzbart/www/nanoMET/FastSim/"
 
+# Logger
 import nanoMET.tools.logger as logger
-
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
-
 
 dirs = {}
 dirs['DYJetsToLL_M50']      = ["DYJetsToLL_M50_MLM_S16_80X_priv"]
@@ -44,8 +43,7 @@ TTJets_FS   = Sample.fromDirectory(name="TTJets_FS", treeName="Events", isData=F
 sample1 = TTJets
 sample2 = TTJets_FS
 
-
-## Sequence
+# Sequence
 read_variables =    ["weight/F","puWeight/F","PV_npvsGood/I",
                     #"jet[pt/F,eta/F,phi/F,btagCSV/F,DFb/F,DFbb/F,id/I,btagDeepCSV/F]", "njet/I","nJetSelected/I",
                     "MET_pt/F", "MET_phi/F", "MET_sumPt/F", "MET_significance/F", "MET_SignificanceRec/F","dl_mass/F", "MET_sumPt/F", "MET_sumEt/F",
@@ -55,12 +53,9 @@ read_variables =    ["weight/F","puWeight/F","PV_npvsGood/I",
 
 sequence = []
 
-## Plotting
+# Plotting
 lumi_scale = 35.9
 noData = True
-
-small = args.small
-
 
 def drawObjects( plotData, dataMCScale, lumi_scale ):
     tex = ROOT.TLatex()
@@ -75,7 +70,7 @@ def drawObjects( plotData, dataMCScale, lumi_scale ):
 
 def drawPlots(plots, dataMCScale):
   for log in [False, True]:
-    ext = "_small" if small else ""
+    ext = "_small" if args.small else ""
     ext += "_log" if log else ""
     plot_directory_ = os.path.join(plot_directory, sample1.name, 'v1', ext)
     for plot in plots:
@@ -102,11 +97,9 @@ sample2.color = ROOT.kGreen+2
 sample1.style = styles.lineStyle(color=ROOT.kRed+1)
 sample2.style = styles.lineStyle(color=ROOT.kGreen+1)
 
-
-
 for s in samples:
     #s.setSelectionString([getFilterCut(isData=False), tr.getSelection("MC")])
-    if small: s.reduceFiles(to=3)
+    if args.small: s.reduceFiles(to=3)
     s.read_variables = read_variables
     #s.weight         = lambda event, s: event.puWeight
     #s.style = styles.fillStyle(s.color)
@@ -164,14 +157,8 @@ plots.append(Plot(
   binning=[50,0.,50.],
 ))
 
-
-
 plotting.fill(plots, read_variables = read_variables, sequence = sequence)
 
 dataMCScale = 1
 drawPlots(plots, dataMCScale)
-
-#for sample in [sample1, sample2]:
-#    sample.read_variables = 
-
 

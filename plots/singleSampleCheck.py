@@ -9,7 +9,7 @@ import copy
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
-argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
+argParser.add_argument('--logLevel',            action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--year',                action='store',      default=2016)
 argParser.add_argument('--tuneEra',             action='store',      default=False)
 argParser.add_argument('--small', action='store_true', help='Small?')
@@ -24,7 +24,6 @@ plot_directory              = "/afs/hephy.at/user/d/dspitzbart/www/nanoMET/valid
 if args.tuneEra:                      plot_directory += "tune%s/"%args.tuneEra
 
 import nanoMET.tools.logger as logger
-
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
