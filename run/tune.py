@@ -102,6 +102,8 @@ sel             = "&&".join([preselection, triggerSel, eventfilter])
 JR              = JetResolution(jer)
 version         = postProcessing_directory.split("/")[0]
 outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i_%s"%("Data" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig, version)
+if args.pTdependent:
+    outfile    += "_pTdep"
 
 # run
 r = run(samples, sel, JR, outfile=outfile, maxN=1e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, puWeight="puWeight", ttbarModifier=args.ttbarModifier, pTdepMetSig=args.pTdependent)
