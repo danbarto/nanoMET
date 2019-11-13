@@ -38,11 +38,12 @@ argParser.add_argument('--normalize',           action='store_true',     help='N
 argParser.add_argument('--reweightSoftJets',    action='store_true',     help='?', )
 argParser.add_argument('--PUup',                action='store_true',     help='?', )
 argParser.add_argument('--test',                action='store_true',     help='?', )
+argParser.add_argument('--pTdependent',         action='store_true',     help='pT dependent MetSig calculation', )
 argParser.add_argument('--plot_directory',      action='store',      default='v13_noSigMax')
 argParser.add_argument('--year',                action='store',      default=2016, type=int)
 argParser.add_argument('--tuneEra',             action='store',      default=False)
 argParser.add_argument('--dataEra',             action='store',      default=False)
-argParser.add_argument('--jetThreshold',        action='store',      default=False)
+argParser.add_argument('--jetThreshold',        action='store',      default=15)
 argParser.add_argument('--selection',           action='store',      default='looseLeptonVeto-onZ')
 args = argParser.parse_args()
 
@@ -54,75 +55,95 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-if args.reweightSoftJets:             args.plot_directory += "_reweightSoftJets"
-if args.PUup:                         args.plot_directory += "_PUup"
-if args.small:                        args.plot_directory += "_small"
-if args.verySmall:                    args.plot_directory += "_verySmall"
-if args.noData:                       args.plot_directory += "_noData"
-if args.tuneEra:                      args.plot_directory += "_tune%s"%args.tuneEra
-if args.dataEra:                      args.plot_directory += "_data%s"%args.dataEra
-if args.jetThreshold:                 args.plot_directory += "_sumPt%s"%args.jetThreshold
-
 # Make samples, will be searched for in the postProcessing directory
 from tunes import tuneParams
-tuneEra = args.year if not args.tuneEra else int(args.tuneEra)
-paramsData  = tuneParams[tuneEra]['data']
-paramsMC    = tuneParams[tuneEra]['mc']
+tuneEra    = args.year if not args.tuneEra else int(args.tuneEra)
+paramsData = tuneParams[tuneEra]['data']
+paramsMC   = tuneParams[tuneEra]['mc']
 
+if len(paramsMC) == 12 and len(paramsData) == 12:
+    pTdependent = True
+elif len(paramsMC) == 7 and len(paramsData) == 7:
+    pTdependent = False
+else:
+    raise Exception("Wrong input parameter settings!" )
+
+if args.reweightSoftJets: args.plot_directory += "_reweightSoftJets"
+if args.PUup:             args.plot_directory += "_PUup"
+if args.small:            args.plot_directory += "_small"
+if args.verySmall:        args.plot_directory += "_verySmall"
+if args.noData:           args.plot_directory += "_noData"
+if args.tuneEra:          args.plot_directory += "_tune%s"%args.tuneEra
+if args.dataEra:          args.plot_directory += "_data%s"%args.dataEra
+if args.jetThreshold:     args.plot_directory += "_sumPt%s"%args.jetThreshold
+if pTdependent:           args.plot_directory += "_pTdep"
+
+# define setting
 if args.year == 2016:
     postProcessing_directory = "2016_v21/dimuon/"
-    from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v21/dimuon/"
+    trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL", "HLT_IsoMu24", "HLT_IsoTkMu24"]
+    METPtVar                 = "MET_pt_nom"
+    METPhiVar                = "MET_phi_nom"
+    JetCollection            = "Jet_pt_nom"
+    vetoEtaRegion            = (10.,10.)
+    jerData                  = "Summer16_25nsV1_DATA"
+    jerMC                    = "Summer16_25nsV1_MC"
+
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
-    data_sample = DoubleMuon_Run2016
-    mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
-    dy          = DY_LO_16
-    top         = Top_16
-    vv          = diboson_16
-    triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
-
-    JERData     = JetResolution('Summer16_25nsV1_DATA')
-    JERMC       = JetResolution('Summer16_25nsV1_MC')
-
+    from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
+    data_sample              = DoubleMuon_Run2016
+    mc                       = [DY_LO_16, Top_16, diboson_16, rare_16]
+    dy                       = DY_LO_16
+    top                      = Top_16
+    vv                       = diboson_16
 
 elif args.year == 2017:
     postProcessing_directory = "2017_v21/dimuon/"
-    from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v21/dimuon/"
+    trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8", "HLT_IsoMu27"]
+    METPtVar                 = "METFixEE2017_pt"
+    METPhiVar                = "METFixEE2017_phi"
+    JetCollection            = "Jet_pt_nom"
+    vetoEtaRegion            = (2.65,3.14)
+    jerData                  = "Fall17_V3_DATA"
+    jerMC                    = "Fall17_V3_MC"
+
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
+    from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
     data_sample = DoubleMuon_Run2017
     if args.dataEra == 'F':
         data_sample = DoubleMuon_Run2017F
     elif args.dataEra == 'BCDE':
         data_sample = DoubleMuon_Run2017BCDE
-    mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
-    dy          = DY_LO_17
-    top         = Top_17
-    vv          = diboson_17
-    triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
-
-    JERData     = JetResolution('Fall17_V3_DATA')
-    JERMC       = JetResolution('Fall17_V3_MC')
+    mc                       = [DY_LO_17, Top_17, diboson_17, rare_17]
+    dy                       = DY_LO_17
+    top                      = Top_17
+    vv                       = diboson_17
 
 elif args.year == 2018:
     postProcessing_directory = "2018_v21/dimuon/"
-    from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v21/dimuon/" #v11 are the old ones without JER
-    from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
-    data_sample = DoubleMuon_Run2018
-    mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
-    dy          = DY_LO_18
-    top         = Top_18
-    vv          = diboson_18
-    triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8', 'HLT_IsoMu24']
+    trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8", "HLT_IsoMu24"]
+    METPtVar                 = "MET_pt_nom"
+    METPhiVar                = "MET_phi_nom"
+    JetCollection            = "Jet_pt_nom"
+    vetoEtaRegion            = (10.,10.)
+    jerData                  = "Autumn18_V1_DATA"
+    jerMC                    = "Autumn18_V1_MC"
 
-    JERData     = JetResolution('Autumn18_V1_DATA')
-    JERMC       = JetResolution('Autumn18_V1_MC')
+    from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
+    from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
+    data_sample              = DoubleMuon_Run2018
+    mc                       = [DY_LO_18, Top_18, diboson_18, rare_18]
+    dy                       = DY_LO_18
+    top                      = Top_18
+    vv                       = diboson_18
+
+JERData      = JetResolution(jerData)
+JERMC        = JetResolution(jerMC)
 
 if args.test:
-    data_sample = testSample
+    data_sample      = testSample
     data_sample.lumi = 1
-    mc          = [testSample]
+    mc               = [testSample]
     
 # Text on the plots
 def drawObjects( plotData, dataMCScale, lumi_scale ):
@@ -159,59 +180,41 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 read_variables = ["weight/F", "RawMET_pt/F", "RawMET_phi/F", "MET_pt/F", "MET_phi/F", "MET_sumPt/F",
                   "fixedGridRhoFastjetAll/F", "Muon[pt/F,eta/F,phi/F,pfRelIso03_all/F,isGoodMuon/I]",
-                  "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F]",
-                  "nJet/I", "nPhoton/I","nMuon/I","nElectron/I"
+                  "Jet[pt/F,eta/F,phi/F,cleanmask/O,cleanmaskMETSig/I,neEmEF/F,jetId/I,neHEF/F,pt_nom/F]",
+                  "nJet/I", "nPhoton/I","nMuon/I","nElectron/I",
+                  METPtVar+"/F", METPhiVar+"/F",
                  ]
 
-if args.year == 2018 or args.year == 2017:
-    read_variables += ["Jet[pt_nom/F]"]
-if args.year == 2018:
-    read_variables += ["MET_pt_nom/F", "MET_phi_nom/F"]
-if args.year == 2017:
-    read_variables += ["METFixEE2017_pt_nom/F", "METFixEE2017_phi_nom/F"]
-
 sequence      = []
-vetoEtaRegion = (2.65, 3.14)             if args.year == 2017 else (10,10)
-jetThreshold  = float(args.jetThreshold) if args.jetThreshold else 15
 
 def calcMETSig( event, sample ):
     if sample.isData:
-        JER = JERData
+        JER    = JERData
         params = paramsData
     else:
-        JER = JERMC
+        JER    = JERMC
         params = paramsMC
-    if args.year == 2017:
-        METPtVar = "METFixEE2017_pt_nom"
-        METPhiVar = "METFixEE2017_phi_nom"
-    elif args.year == 2018:
-        METPtVar = "MET_pt_nom"
-        METPhiVar = "MET_phi_nom"
-    else:
-        METPtVar = "MET_pt"
-        METPhiVar = "MET_phi"
-    if args.year == 2018 or args.year ==2017: JetCollection = "Jet_pt_nom"
-    else: JetCollection = "Jet_pt"
-    ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=jetThreshold)
+
+    ev = Event(event, JER, isData=sample.isData, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, pTdepMetSig=pTdependent)
     ev.calcMETSig(params)
     event.MET_significance_rec = ev.MET_sig
     if args.test:
-        print 'MET Sig:', ev.MET_sig, event.MET_significance
+        logger.info('MET Sig: %f, %f'%(ev.MET_sig, event.MET_significance))
     event.Jet_dpt = [ x*ev.Jet_pt[i] for i,x in enumerate(ev.Jet_dpt) ] if len(ev.Jet_dpt) > 0 else [0]
 
 def getMET_neEmEBalace( event, sample ):
-    Jet_dPhiJetMET = []
-    MET_min = []
-    MET_minX = []
+    Jet_dPhiJetMET    = []
+    MET_min           = []
+    MET_minX          = []
     MET_min_pseudoJet = []
-    sumEt = 0
+    sumEt         = 0
     badJet_Energy = 0
 
     MET_x = event.MET_pt * math.cos(event.MET_phi)
     MET_y = event.MET_pt * math.sin(event.MET_phi)
     
-    pseudoJet_x = 0.
-    pseudoJet_y = 0.
+    pseudoJet_x      = 0.
+    pseudoJet_y      = 0.
     pseudoJet_neEmEF = 0.
     pseudoJet_sumPt  = 0.
 
@@ -227,7 +230,7 @@ def getMET_neEmEBalace( event, sample ):
         # do the cool stuff
         if 2.65<abs(event.Jet_eta[i])<3.14:# and event.Jet_neEmEF[i]*event.Jet_pt[i]*math.cosh(event.Jet_eta[i])>15:
             EE_jets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i]})
-            pseudoJet_sumPt += event.Jet_pt[i]
+            pseudoJet_sumPt  += event.Jet_pt[i]
             pseudoJet_neEmEF += event.Jet_neEmEF[i]*event.Jet_pt[i]
 
             Jet_x = event.Jet_pt[i] * math.cos(event.Jet_phi[i])
@@ -237,30 +240,30 @@ def getMET_neEmEBalace( event, sample ):
             pseudoJet_y += Jet_y
 
             if event.Jet_neEmEF[i] > 0:
-                alpha_j = 1 + (MET_x*Jet_x + MET_y*Jet_y)/(event.Jet_neEmEF[i]*(Jet_x**2 + Jet_y**2))
+                alpha_j  = 1 + (MET_x*Jet_x + MET_y*Jet_y)/(event.Jet_neEmEF[i]*(Jet_x**2 + Jet_y**2))
                 alphaX_j = 1 + (MET_x*Jet_x + MET_y*Jet_y)/((Jet_x**2 + Jet_y**2))
             else:
-                alpha_j = 1
+                alpha_j  = 1
                 alphaX_j = 1
 
-            alpha_j = max(min(alpha_j,1),0)
+            alpha_j  = max(min(alpha_j,1),0)
             alphaX_j = max(min(alphaX_j,1),0)
             
             Jet_pt_min = math.sqrt((Jet_x*event.Jet_neEmEF[i]*alpha_j)**2 + (Jet_y*event.Jet_neEmEF[i]*alpha_j)**2)
-            MET_min_j = math.sqrt((MET_x - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
+            MET_min_j  = math.sqrt((MET_x - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_x)**2 + (MET_y - (alpha_j-1) * event.Jet_neEmEF[i] * Jet_y)**2)
             MET_minX_j = math.sqrt((MET_x - (alphaX_j-1) * Jet_x)**2 + (MET_y - (alphaX_j-1) * Jet_y)**2)
             MET_min.append((alpha_j, MET_min_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
             MET_minX.append((alphaX_j, MET_minX_j, event.Jet_pt[i], event.Jet_phi[i], event.Jet_eta[i], Jet_pt_min))
     
     # get all combinations of pseudo-jets
-    nEE_jets = len(EE_jets)
+    nEE_jets          = len(EE_jets)
     MET_min_pseudoJet = copy.deepcopy(MET_min)
-    nEE_jets = min(nEE_jets, 6)
+    nEE_jets          = min(nEE_jets, 6)
     for i in range(2,nEE_jets+1):
         combinations = itertools.combinations(EE_jets, i)
         for comb in combinations:
-            pseudoJet_x = 0.
-            pseudoJet_y = 0.
+            pseudoJet_x      = 0.
+            pseudoJet_y      = 0.
             pseudoJet_neEmEF = 0.
             pseudoJet_sumPt  = 0.
 
@@ -271,19 +274,19 @@ def getMET_neEmEBalace( event, sample ):
                 pseudoJet_x += Jet_x
                 pseudoJet_y += Jet_y
 
-                pseudoJet_sumPt     += jet['pt']
-                pseudoJet_neEmEF    += jet['neEmEF'] * jet['pt']
+                pseudoJet_sumPt  += jet['pt']
+                pseudoJet_neEmEF += jet['neEmEF'] * jet['pt']
 
             if pseudoJet_neEmEF>0:
                 pseudoJet_neEmEF = pseudoJet_neEmEF/pseudoJet_sumPt
-                alpha_j = 1 + (MET_x*pseudoJet_x + MET_y*pseudoJet_y)/(pseudoJet_neEmEF*(pseudoJet_x**2 + pseudoJet_y**2))
+                alpha_j          = 1 + (MET_x*pseudoJet_x + MET_y*pseudoJet_y)/(pseudoJet_neEmEF*(pseudoJet_x**2 + pseudoJet_y**2))
             else:
                 alpha_j = 1
-            alpha_j = max(min(alpha_j,1),0)
+            alpha_j   = max(min(alpha_j,1),0)
             MET_min_j = math.sqrt((MET_x - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_x)**2 + (MET_y - (alpha_j-1) * pseudoJet_neEmEF * pseudoJet_y)**2)
             MET_min_pseudoJet.append((alpha_j, MET_min_j, -99, -99, -99, -99))
     
-    event.nJet_EE = len(MET_min)
+    event.nJet_EE         = len(MET_min)
     event.nJet_pseudoJets = len(MET_min_pseudoJet)
                    
     event.Jet_pt_EE      = -99
@@ -292,8 +295,8 @@ def getMET_neEmEBalace( event, sample ):
     event.Jet_pt_EE_corr = -99
 
     if len(MET_min)>0:
-        MET_min_t = min(MET_min, key = lambda t: t[1])
-        MET_minX_t = min(MET_minX, key = lambda t: t[1])
+        MET_min_t           = min(MET_min, key = lambda t: t[1])
+        MET_minX_t          = min(MET_minX, key = lambda t: t[1])
         MET_min_pseudoJet_t = min(MET_min_pseudoJet, key = lambda t: t[1])
 
     if len(MET_min) == 0:
@@ -328,7 +331,7 @@ def getMET_neEmEBalace( event, sample ):
         event.Jet_pt_EE_corr    = MET_min_t[5]
         #print MET_min, event.MET_pt
 
-    event.MET_min_ratio = abs(event.MET_min/event.MET_pt - 1)
+    event.MET_min_ratio       = abs(event.MET_min/event.MET_pt - 1)
     event.MET_min_ratio_MET40 = abs(event.MET_min_MET40/event.MET_pt - 1)
 
 
@@ -343,14 +346,14 @@ def getNJet( event, sample ):
     for i in range(event.nJet):
         allJets.append({'pt':event.Jet_pt[i], 'eta':event.Jet_eta[i], 'phi':event.Jet_phi[i], 'neEmEF':event.Jet_neEmEF[i], 'jetId':event.Jet_jetId[i], 'cleanmask':event.Jet_cleanmask[i], 'neHEF':event.Jet_neHEF[i], 'cleanmaskMETSig':event.Jet_cleanmaskMETSig[i]})
 
-    highPtJets = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5 and j['cleanmask']>0), allJets )
-    highPtJetsNoCleanmask = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5), allJets )
-    event.nJet_good = len(highPtJets)
+    highPtJets                  = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5 and j['cleanmask']>0), allJets )
+    highPtJetsNoCleanmask       = filter( lambda j: (j['pt']>30 and abs(j['eta'])<2.4 and j['jetId']>5), allJets )
+    event.nJet_good             = len(highPtJets)
     event.nJet_good_noCleanmask = len(highPtJetsNoCleanmask)
-    event.nJet_noLeptons = len( filter( lambda j:j['cleanmask']>0, allJets) )
-    lowPtJets = filter( lambda j: j['pt']<30., allJets)
-    event.nJet_lowPt                = len( lowPtJets )
-    event.HT_lowPt                  = sum( [ x['pt'] for x in lowPtJets] )
+    event.nJet_noLeptons        = len( filter( lambda j:j['cleanmask']>0, allJets) )
+    lowPtJets                   = filter( lambda j: j['pt']<30., allJets)
+    event.nJet_lowPt            = len( lowPtJets )
+    event.HT_lowPt              = sum( [ x['pt'] for x in lowPtJets] )
 
     # get all soft jets that enter the MET Significance
     lowPtJets_METSig                = filter( lambda j: (not 2.65<abs(j['eta'])<3.14 and j['cleanmaskMETSig']), lowPtJets)
@@ -372,7 +375,7 @@ def getNJet( event, sample ):
         sumPtneHEF  += jet['pt']*jet['neHEF']
         
     event.sumPtneEmEF_lowPt_eta2p5to3p1 = sumPtneEmEF
-    event.sumPtneHEF_lowPt_eta2p5to3p1 = sumPtneHEF
+    event.sumPtneHEF_lowPt_eta2p5to3p1  = sumPtneHEF
 
 def getJets( event, sample ):
     allJets = []
@@ -402,7 +405,7 @@ def getJets( event, sample ):
 
 def getSoftJetWeight( event, sample ):
     event.reweight_nJetLowPt = 1
-    weights = [0.5, 0.5, 0.6, 0.7, 0.9, 1.2] + list(np.arange(1.5, 9., 0.5))
+    weights                  = [0.5, 0.5, 0.6, 0.7, 0.9, 1.2] + list(np.arange(1.5, 9., 0.5))
     event.reweight_nJetLowPt = weights[event.nJet_lowPt]if event.nJet_lowPt < len(weights) else weights[-1]
 
 sequence += [ getJets ]
@@ -414,12 +417,9 @@ if args.year == 2017:
     sequence += [ getMET_neEmEBalace, getSoftJetWeight ]
 
 def getLeptonSelection( mode ):
-  if   mode=="mumu":
-    if args.year == 2016:
-        return cutInterpreter.cutString("diMuon16")
-    else:
+    if mode=="mumu":
         # slower trigger turn-on in 2017&2018
-        return cutInterpreter.cutString("diMuon1718")
+        return cutInterpreter.cutString("diMuon16" if args.year == 2016 else "diMuon1718")
 
 nTrueInt36fb_puRW        = getReweightingFunction(data="PU_2016_36000_XSecCentral", mc="Summer16")
 nTrueInt36fb_puRWUp      = getReweightingFunction(data="PU_2016_36000_XSecUp",      mc="Summer16")
@@ -431,14 +431,13 @@ allModes   = ['mumu']
 
 for index, mode in enumerate(allModes):
   yields[mode] = {}
-  if   mode=="mumu":
+  if mode=="mumu":
     data_sample.texName = "data (2 #mu)"
-    data_selectionString = '&&'.join([getFilterCut(isData=True, year=args.year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
+    data_selectionString = '&&'.join([getFilterCut(isData=True, year=args.year), getLeptonSelection(mode), "(%s)"%"||".join(trigger)])
     # maybe add singleMu backup
-    print data_selectionString
     data_sample.setSelectionString([data_selectionString])
     data_sample.scale = 1
-  if   mode=="mumu": data_sample.texName = "data (2 #mu)"
+  if mode=="mumu": data_sample.texName = "data (2 #mu)"
 
   data_sample.name           = "data"
   data_sample.read_variables = ["event/I","run/I"]#,"jsonPassed/I"]
@@ -462,7 +461,7 @@ for index, mode in enumerate(allModes):
         sample.weight         = lambda event, sample: event.puWeightUp
     else:
         sample.weight         = lambda event, sample: event.puWeight
-    sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
+    sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(trigger)])
 
   if not args.noData:
     stack = Stack(mc, data_sample)
