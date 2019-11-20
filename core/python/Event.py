@@ -25,8 +25,8 @@ class Event:
         cleanJetIndices  = [ i for i,x in enumerate(event.Jet_cleanmaskMETSig) if x>0 ]
         
         # only use jets above threshold and outside a veto region
-        acceptedJetIndices  = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]>=jetThreshold and not (vetoEtaRegion[0] <= abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ]
-        lowPtJetIndices     = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]<jetThreshold  and not (vetoEtaRegion[0] <= abs(event.Jet_eta[x]) < vetoEtaRegion[1]) ) ] # EE stuff (if rejected) shouldn't be used for anything
+        acceptedJetIndices  = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]>float(jetThreshold) and not (float(vetoEtaRegion[0]) <= abs(event.Jet_eta[x]) < float(vetoEtaRegion[1])) ) ]
+        lowPtJetIndices     = [ x for x in cleanJetIndices if ( getattr(event, JetCollection)[x]<float(jetThreshold) and not (float(vetoEtaRegion[0]) <= abs(event.Jet_eta[x]) < float(vetoEtaRegion[1])) ) ] # EE stuff (if rejected) shouldn't be used for anything
 
         self.Jet_pt     = [ getattr(event, JetCollection)[i] for i in acceptedJetIndices ]
         self.Jet_eta    = [ event.Jet_eta[i]                 for i in acceptedJetIndices ]
