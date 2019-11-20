@@ -11,10 +11,12 @@ mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
 
 special_cuts = {
     # ("multiIsoVT":        "(1)", 
+    "diMuonTune":       "(Sum$(Muon_pt>25&&Muon_isGoodMuon)==2)",
     "diMuon":           "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0)",
     "diMuon16":         "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>25&&Muon_isGoodMuon)>0)",
     "diMuon1718":       "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>30&&Muon_isGoodMuon)>0)",
     "looseLeptonVeto":  "(Sum$(Electron_pt>15&&abs(Electron_eta)<2.4&&Electron_pfRelIso03_all<0.4) + Sum$(Muon_pt>15&&abs(Muon_eta)<2.4&&Muon_pfRelIso03_all<0.4) )==2",
+    "tuneElectronVeto": "(Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0)",
     "lepSel":           "l1_pt>30 && l2_pt>20",
     "badJetSrEVeto":    "Sum$(Jet_neEmEF*Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt<50))<200",
     "noEEJets":         "Sum$(Jet_pt>15&&abs(Jet_eta)>2.65&&abs(Jet_eta)<3.14)==0",

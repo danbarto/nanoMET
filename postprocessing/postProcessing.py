@@ -38,8 +38,8 @@ options = argParser.parse_args()
 # Logger
 import nanoMET.tools.logger as logger
 import RootTools.core.logger as logger_rt
-logger    = logger.get_logger(   args.logLevel, logFile = None)
-logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
+logger    = logger.get_logger(   options.logLevel, logFile = None)
+logger_rt = logger_rt.get_logger(options.logLevel, logFile = None)
 
 # from RootTools
 from RootTools.core.standard            import *
@@ -192,30 +192,39 @@ sample.files = [ f[0] + '/' + f[1] for f in allFiles ]
 logger.info("Loading modules.")
 
 if year == 2016:
+    ## tuning from November 2019, with sumPt threshold of 15
     puwProducer = puWeightProducer(pufile_mc2016,pufile_data2016,"pu_mc","pileup",verbose=False)
-    metSigParamsMC      = [1.617529475909303, 1.617529475909303, 1.4505983036866312, 1.4505983036866312, 1.411498565372343, 1.411498565372343, 1.4087559908291813, 1.4087559908291813, 1.3633674107893856, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
-    metSigParamsData    = [1.843242937068234, 1.843242937068234, 1.64107911184195,   1.64107911184195,   1.567040591823117, 1.567040591823117, 1.5077143780804294, 1.5077143780804294, 1.614014783345394,  1.614014783345394, -0.0005986196920895609, 0.6071479349467596]
+    metSigParamsMC      = [1.6789559564013943, 1.543666136735388, 1.4728342034302846, 1.4983602533711493, 1.4758351625239376, 0.008039429222660197, 0.6698834337575063]
+    metSigParamsData    = [1.9034557745999647, 1.704569089762286, 1.5854229036413823, 1.4974876665993915, 1.673074548622476, 0.0015993706020479338, 0.6288393591242573]
     JER                 = "Summer16_25nsV1_MC"          if not sample.isData else "Summer16_25nsV1_DATA"
     archive             = '' if not sample.isData else "Summer16_07Aug2017_V11_DATA"
     jetThreshold = 15
 
 elif year == 2017:
     puwProducer = puWeightProducer("auto",pufile_data2017,"pu_mc","pileup",verbose=False)
-    # tuning from June 24th, with sumPt threshold of 15
-    metSigParamsMC      = [1.9648214119268503, 1.5343086462230238, 1.9167197601498538, 1.5145044341064964, 1.8069380221985405, 1.3217263662622654, 1.5506294867561126, 1.272977540964842,  1.50742322311234,   1.6542883449796797, -0.0017865650107230548,  0.6593106706741719]
-    metSigParamsData    = [2.228118299837604,  1.2420725475347338, 2.227630982417529,  1.256752205787215,  2.0215250734187853, 1.1557507029911258, 1.7350536144535336, 1.1587692458345757, 1.9385081854607988, 1.8726188460472792, -2.6697894266706265e-05, 0.646984812801919]
+    ## tuning from November 2019, with sumPt threshold of 15
+    metSigParamsMC      = [1.7037614210331564, 1.7166071080686363, 1.6701114323915047, 1.502876236941622, 1.5780611987345947, -0.00012634174329968426, 0.6834329126092852]
+    metSigParamsData    = [1.9410724258735805, 1.878895369894863, 1.9122297708165825, 1.7090755971750793, 2.0004413703111146, -0.0001347239857148459, 0.6732736907156339]
     JER                 = "Fall17_V3_MC"                if not sample.isData else "Fall17_V3_DATA"
     archive             = '' if not sample.isData else  "Fall17_17Nov2017_V32_DATA"
     jetThreshold = 15
 
 elif year == 2018:
     puwProducer = puWeightProducer("auto",pufile_data2018,"pu_mc","pileup",verbose=False)
-    ## tuning from October 2019, with sumPt threshold of 25
-    metSigParamsMC      = [1.9033100259447273, 1.7374326087706358, 1.6957838005481387, 1.7283187962364615, 1.5868244614361302, 1.526252837049335, 1.3744055574137417, 1.4500298644941831, 1.4796204632654997, 1.4481227819959115, 0.0019899110367503207, 0.6927496536100137]
-    metSigParamsData    = [1.7492714572981323, 1.3430198915313956, 1.911348554103867, 1.3718438058490257, 1.5885672661901442, 1.4385903478138795, 1.521901070409261, 1.4522895772008289, 1.8870084799263003, 1.7138750357657668, -1.359837542505224e-06, 0.7434240965656385]
-    JER                 = "Autumn18_V1_MC"                if not sample.isData else "Autumn18_V1_DATA"
+    ## tuning from November 2019, with sumPt threshold of 15
+    metSigParamsMC      = [1.8549938037723896, 1.6509411315853, 1.636437587406195, 1.4672590328655033, 1.247095140902097, -6.784962823364049e-05, 0.6354413715418223]
+    metSigParamsData    = [1.7597963093944353, 1.7529358941285436, 1.6542030082916106, 1.355947946214444, 1.62529299229821, 0.0003583146878367062, 0.6808117480506645]
+    JER                 = "Autumn18_V7b_MC" if not sample.isData else "Autumn18_V7b_DATA"
     archive             = '' if not sample.isData else "Autumn18_V19_DATA"
-    jetThreshold = 25
+    jetThreshold = 15
+
+if len(metSigParamsMC) == 12 and len(metSigParamsData) == 12:
+    pTdependent = True
+elif len(metSigParamsMC) == 7 and len(metSigParamsData) == 7:
+    pTdependent = False
+else:
+    raise Exception("Wrong input parameter settings!" )
+
 
 
 unclEnThreshold = 15
@@ -235,7 +244,7 @@ if sample.isData:
     modules += [
         METSigTools(),
         lumiWeightProducer(1, isData=True),
-        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
+        METSigProducer(JER, metSigParams, useRecorr=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion, pTdependent=pTdependent),
     ]
 
 else:
@@ -243,7 +252,7 @@ else:
         puwProducer,
         lumiWeightProducer(lumiScaleFactor),
         METSigTools(),
-        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion),
+        METSigProducer(JER, metSigParams, useRecorr=True, calcVariations=True, jetThreshold=jetThreshold, METCollection=METCollection, vetoEtaRegion=vetoEtaRegion, pTdependent=pTdependent),
     ]
 
 logger.info("Preparing post-processor.")

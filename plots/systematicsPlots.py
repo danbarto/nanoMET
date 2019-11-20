@@ -106,19 +106,18 @@ if not args.isChild and (args.selectSys == "all" or args.selectSys == "combine")
   exit(0)
 
 if args.noData:                   args.plot_directory += "_noData"
-if args.signal == "DM":           args.plot_directory += "_DM"
-if args.signal == "T2tt":         args.plot_directory += "_T2tt"
+#if args.signal == "DM":           args.plot_directory += "_DM"
+#if args.signal == "T2tt":         args.plot_directory += "_T2tt"
 if args.small:                    args.plot_directory += "_small"
 
-year = int(args.year)
 try: os.makedirs(os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory))
 except: pass
 
 # Make samples, will be searched for in the postProcessing directory
-if year == 2016:
-    postProcessing_directory = "2016_v21/dimuon/"
+if args.year == 2016:
+    postProcessing_directory = "2016_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v21/dimuon/"
+    postProcessing_directory = "2016_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
     data_sample = DoubleMuon_Run2016
     mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
@@ -126,10 +125,10 @@ if year == 2016:
     top         = Top_16
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL', 'HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL', 'HLT_IsoMu24', 'HLT_IsoTkMu24']
 
-elif year == 2017:
-    postProcessing_directory = "2017_v21/dimuon/"
+elif args.year == 2017:
+    postProcessing_directory = "2017_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v21/dimuon/"
+    postProcessing_directory = "2017_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
@@ -137,10 +136,10 @@ elif year == 2017:
     top         = Top_17
     triggers    = ['HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ', 'HLT_IsoMu27']
 
-elif year == 2018:
-    postProcessing_directory = "2018_v21/dimuon/"
+elif args.year == 2018:
+    postProcessing_directory = "2018_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v21/dimuon/"
+    postProcessing_directory = "2018_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18, diboson_18, rare_18]
@@ -181,18 +180,10 @@ def weightMC( sys = None ):
     
 # Read variables and sequences
 read_variables = ["weight/F", "Jet[pt/F,eta/F,phi/F,pt_nom/F]",
-                  "MET_pt/F", "MET_phi/F",# "MET_pt_nom/F", "MET_phi_nom/F"
+                  "MET_pt/F", "MET_phi/F", "MET_pt_nom/F", "MET_phi_nom/F"
                   ]
 
 sequence = []
-
-def getLeptonSelection( mode ):
-  if   mode=="mumu":
-    if year == 2016:
-        return cutInterpreter.cutString("diMuon16")
-    else:
-        # slower trigger turn-on in 2017&2018
-        return cutInterpreter.cutString("diMuon1718")
 
 # Loop over channels
 allPlots   = {}
@@ -201,7 +192,7 @@ for index, mode in enumerate(allModes):
     logger.info("Modes")
     logger.info('Working on mode ' + str(mode))
 
-    data_selectionString = '&&'.join([getFilterCut(isData=True, year=year), getLeptonSelection(mode), "(%s)"%"||".join(triggers)])
+    data_selectionString = '&&'.join([getFilterCut(isData=True, year=args.year), "(%s)"%"||".join(triggers)])
     data_sample.setSelectionString([data_selectionString])
     data_sample.scale = 1
 
@@ -227,7 +218,7 @@ for index, mode in enumerate(allModes):
         sample.style           = styles.fillStyle(sample.color, lineColor = sample.color)
         sample.read_variables  = ["puWeight/F"]
         sample.read_variables += ["%s/F"%s for s in weight_systematics]
-        if year == 2017:
+        if args.year == 2017:
             sample.read_variables += ["METFixEE2017_pt_nom/F"]
             sample.read_variables += ["METFixEE2017_pt_%s/F"%s   for s in jet_systematics]
             sample.read_variables += ["METFixEE2017_pt_%s/F"%s   for s in met_systematics]
@@ -238,7 +229,7 @@ for index, mode in enumerate(allModes):
         sample.read_variables += ["MET_significance_%s/F"%s    for s in jet_systematics]
         sample.read_variables += ["MET_significance_%s/F"%s    for s in met_systematics]
 
-        sample.setSelectionString([getFilterCut(isData=False, year=args.year), getLeptonSelection(mode), "( %s )"%" || ".join(triggers)])
+        sample.setSelectionString([getFilterCut(isData=False, year=args.year), "(%s)"%"||".join(triggers)])
 
     # Use some defaults
     #Plot.setDefaults( selectionString = cutInterpreter.cutString(args.selection) )
@@ -249,7 +240,7 @@ for index, mode in enumerate(allModes):
     sys_stacks = {sys:copy.deepcopy(stack_mc) for sys in [None] + weight_systematics + jme_systematics }
     plots = []
   
-    if year == 2016 or year == 2018:
+    if args.year == 2016 or args.year == 2018:
         ## MET_pt
         if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
             met_data  = Plot( 
@@ -281,7 +272,7 @@ for index, mode in enumerate(allModes):
         plots.extend( met_mc.values() )
 
 
-    if year == 2017:
+    if args.year == 2017:
         ## METFixEE2017_pt
         if not args.noData and (args.selectSys == 'None' or args.selectSys == 'combine'):
             met_data  = Plot( 
@@ -381,7 +372,7 @@ for index, mode in enumerate(allModes):
 
     ]
 
-    result_dir  = os.path.join(plot_directory, "systematicsPlots", str(args.year), args.plot_directory, mode, args.selection)
+    result_dir  = os.path.join(plot_directory, "systematicsPlots", str(args.year), args.plot_directory, args.selection, mode)
     result_file = os.path.join(result_dir, 'results.pkl')
     try: os.makedirs(result_dir)
     except: pass
@@ -507,7 +498,7 @@ for index, mode in enumerate(allModes):
             for log in [False, True]:
                 postFix = '_noJER' if args.skipJER else ''
                 postFix += '_noUnclEn' if args.skipUnclEn else ''
-                plotDir = os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory + postFix, mode + ("_log" if log else "") + "_scaled", args.selection)
+                plotDir = os.path.join(plot_directory, 'systematicsPlots', str(args.year), args.plot_directory + postFix, args.selection, mode + "_scaled", "log" if log else "lin")
                 if args.showOnly: plotDir = os.path.join(plotDir, "only_" + args.showOnly)
                 plotting.draw(plot,
                     plot_directory = plotDir,

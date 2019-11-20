@@ -47,9 +47,9 @@ if args.noData:    args.plot_directory += "_noData"
 
 # Make samples, will be searched for in the postProcessing directory
 if year == 2016:
-    postProcessing_directory = "2016_v21/dimuon/"
+    postProcessing_directory = "2016_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
-    postProcessing_directory = "2016_v21/dimuon/"
+    postProcessing_directory = "2016_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
     data_sample = DoubleMuon_Run2016
     mc          = [DY_LO_16, Top_16, diboson_16, rare_16]
@@ -63,9 +63,9 @@ if year == 2016:
     paramsMC    = [1.617529475909303, 1.4505983036866312, 1.411498565372343, 1.4087559908291813, 1.3633674107893856, 0.0019861227075085516, 0.6539410816436597]
 
 elif year == 2017:
-    postProcessing_directory = "2017_v21/dimuon/"
+    postProcessing_directory = "2017_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
-    postProcessing_directory = "2017_v21/dimuon/"
+    postProcessing_directory = "2017_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
     data_sample = DoubleMuon_Run2017
     mc          = [DY_LO_17, Top_17, diboson_17, rare_17]
@@ -79,9 +79,9 @@ elif year == 2017:
     paramsMC    = [0.7908154690397596, 0.8274420527567241, 0.8625204829478312, 0.9116933716967324, 1.1863207810108252, -0.0021905431583211926, 0.6620237657886061]
     
 elif year == 2018:
-    postProcessing_directory = "2018_v21/dimuon/"
+    postProcessing_directory = "2018_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
-    postProcessing_directory = "2018_v21/dimuon/"
+    postProcessing_directory = "2018_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
     data_sample = DoubleMuon_Run2018
     mc          = [DY_LO_18, Top_18, diboson_18, rare_18]

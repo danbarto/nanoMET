@@ -31,6 +31,7 @@ argParser.add_argument('--jetThreshold',                  action='store',      t
 argParser.add_argument('--ttbarModifier',                 action='store',      type=int, default=1 )
 argParser.add_argument('--selection',                     action='store',      type=str, default="diMuon-looseLeptonVeto-onZ" )
 argParser.add_argument('--year',                          action='store',      type=int, default=2016, choices=[2016,2017,2018] )
+argParser.add_argument('--addon',                         action='store',      type=str, default=None, help='additional label in output file')
 argParser.add_argument('--runData',                       action='store_true', help='run data tuning', )
 args = argParser.parse_args()
 
@@ -42,7 +43,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 # define setting
 if args.year == 2016:
-    postProcessing_directory = "2016_v21/dimuon/"
+    postProcessing_directory = "2016_v22/dimuon/"
     trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL", "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL", "HLT_IsoMu24", "HLT_IsoTkMu24"]
     METPtVar                 = "MET_pt_nom"
     METPhiVar                = "MET_phi_nom"
@@ -59,7 +60,7 @@ if args.year == 2016:
         jer                  = "Summer16_25nsV1_MC"
 
 elif args.year == 2017:
-    postProcessing_directory = "2017_v21/dimuon/"
+    postProcessing_directory = "2017_v22/dimuon/"
     args.selection          += "-BadEEJetVeto"
     trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ", "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8", "HLT_IsoMu27"]
     METPtVar                 = "METFixEE2017_pt"
@@ -77,7 +78,7 @@ elif args.year == 2017:
         jer                  = "Fall17_V3_MC"
 
 elif args.year == 2018:
-    postProcessing_directory = "2018_v21/dimuon/"
+    postProcessing_directory = "2018_v22/dimuon/"
     trigger                  = ["HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8", "HLT_IsoMu24"]
     METPtVar                 = "MET_pt_nom"
     METPhiVar                = "MET_phi_nom"
@@ -87,26 +88,29 @@ elif args.year == 2018:
     if args.runData:
         from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
         samples              = [DoubleMuon_Run2018]
-        jer                  = "Autumn18_V1_DATA"
+#        jer                  = "Autumn18_V1_DATA"
+        jer                  = "Autumn18_V7b_DATA"
     else:
         from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
         samples              = [DY_LO_18, Top_18, diboson_18, rare_18]
-        jer                  = "Autumn18_V1_MC"
-
+#        jer                  = "Autumn18_V1_MC"
+        jer                  = "Autumn18_V7b_MC"
 
 # calculate setting
 preselection    = cutInterpreter.cutString(args.selection)
-triggerSel      = "(%s)"%"||".join(["Alt$(%s,0)"%trigg for trigg in trigger])
+triggerSel      = "(%s)"%"||".join(trigger)
 eventfilter     = getFilterCut( args.year, isData=args.runData )
 sel             = "&&".join([preselection, triggerSel, eventfilter])
 JR              = JetResolution(jer)
 version         = postProcessing_directory.split("/")[0]
-outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i_%s"%("Data" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig, version)
+outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i"%("Data" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig)
+if args.addon:
+    outfile    += "_"+str(args.addon)
 if args.pTdependent:
     outfile    += "_pTdep"
+outfile        += "_"+version
 
 # run
-r = run(samples, sel, JR, outfile=outfile, maxN=1e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, puWeight="puWeight", ttbarModifier=args.ttbarModifier, pTdepMetSig=args.pTdependent)
+r = run(samples, sel, JR, outfile=outfile, maxN=3e5, METPtVar=METPtVar, METPhiVar=METPhiVar, JetCollection=JetCollection, vetoEtaRegion=vetoEtaRegion, jetThreshold=args.jetThreshold, puWeight="puWeight", ttbarModifier=args.ttbarModifier, pTdepMetSig=args.pTdependent)
 LL = r.getLL(r.defaultStart)
 r.minimize(start=r.defaultStart, maxSig=args.maxSig)
-

@@ -159,7 +159,7 @@ if __name__ == "__main__":
     logger    = logger.get_logger(   "INFO", logFile = None)
     logger_rt = logger_rt.get_logger("INFO", logFile = None)
 
-    postProcessing_directory = "2016_v21/dimuon/"
+    postProcessing_directory = "2016_v22/dimuon/"
     from nanoMET.samples.nanoTuples_Summer16_postProcessed import *
     from nanoMET.samples.nanoTuples_Run2016_17Jul2018_postProcessed import *
 

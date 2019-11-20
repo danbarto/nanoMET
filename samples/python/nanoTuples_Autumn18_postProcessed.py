@@ -19,7 +19,7 @@ try:
   import sys
   postProcessing_directory = sys.modules['__main__'].postProcessing_directory
 except:
-  postProcessing_directory = "2018_v21/dimuon/"
+  postProcessing_directory = "2018_v22/dimuon/"
 
 logger.info("Loading MC samples from directory %s", os.path.join(data_directory, postProcessing_directory))
 
