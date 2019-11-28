@@ -8,14 +8,14 @@ import copy
 import itertools
 from math import sqrt, cos, sin, pi, acos
 
+# RootTools
+from RootTools.core.standard import *
+
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',  action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',     action='store_true', help='Small?')
 args = argParser.parse_args()
-
-# RootTools
-from RootTools.core.standard import *
 
 data_directory              = "/afs/hephy.at/data/dspitzbart03/nanoAOD/"
 postProcessing_directory    = "dimuon/"

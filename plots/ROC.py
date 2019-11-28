@@ -36,7 +36,7 @@ argParser.add_argument('--selection',           action='store',      default='lo
 args = argParser.parse_args()
 
 # Logger
-import StopsDilepton.tools.logger as logger
+import nanoMET.tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
