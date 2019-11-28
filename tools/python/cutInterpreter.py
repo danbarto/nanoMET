@@ -11,22 +11,29 @@ mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
 
 special_cuts = {
     # ("multiIsoVT":        "(1)", 
+    "diMuonTune":       "(Sum$(Muon_pt>25&&Muon_isGoodMuon)==2)",
+    "diMuon":           "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>35&&Muon_isGoodMuon)>0)",
+    "diMuon16":         "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>25&&Muon_isGoodMuon)>0)",
+    "diMuon1718":       "(Sum$(Muon_pt>20&&Muon_isGoodMuon)==2&&Sum$(Muon_pt>30&&Muon_isGoodMuon)>0)",
     "looseLeptonVeto":  "(Sum$(Electron_pt>15&&abs(Electron_eta)<2.4&&Electron_pfRelIso03_all<0.4) + Sum$(Muon_pt>15&&abs(Muon_eta)<2.4&&Muon_pfRelIso03_all<0.4) )==2",
+    "tuneElectronVeto": "(Sum$(Electron_pt>10&&abs(Electron_eta)<2.5&&Electron_cutBased>0&&abs(Electron_pfRelIso03_all)<0.4)==0)",
     "lepSel":           "l1_pt>30 && l2_pt>20",
     "badJetSrEVeto":    "Sum$(Jet_neEmEF*Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt<50))<200",
     "noEEJets":         "Sum$(Jet_pt>15&&abs(Jet_eta)>2.65&&abs(Jet_eta)<3.14)==0",
     "badJetSrEVetoV2":  "Sum$(Jet_neEmEF*Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))<(-(3./7)*Sum$(Jet_pt*cosh(Jet_eta)*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))+430)",
     "dPhiEEMet":        "(Sum$((-cos(Jet_phi-MET_phi)*Jet_pt*Jet_neEmEF)*(cos(Jet_phi-MET_phi)<cos(2*pi/3.))*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))/MET_pt)<0.2",
     "dPhiEEMetV2":      "(Sum$((-cos(Jet_phi-MET_phi)*Jet_pt*Jet_neEmEF*cosh(Jet_eta))*(cos(Jet_phi-MET_phi)<cos(2*pi/3.))*(2.5<abs(Jet_eta)&&abs(Jet_eta)<3))/MET_pt)<0.5",
+    "incl":             "(1)",
     "allZ":             "(1)",
     "onZ":              "abs(dl_mass-91.1876)<10",
     "offZ":             "abs(dl_mass-91.1876)>10",
-    "BadEEJetveto":     "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>30))==0"
+    "BadEEJetVeto":     "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>30))==0",
+    "BadEEJetVetoLow":  "Sum$((2.6<abs(Jet_eta)&&abs(Jet_eta)<3&&Jet_pt>15))==0",
   }
 
-continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood") ]
+continous_variables = [ ("met", "MET_pt"), ("mll", "dl_mass"), ("nPV", "PV_npvsGood"), ("nSoftJet", "Sum$(Jet_pt>15&&Jet_pt<30)"), ("sumPt", "MET_sumPt") ]
 #discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4)"), ("btag", "Sum$(Jet_pt>30&&Jet_jetId>0&&Jet_cleanmask>0&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4941)")]
-discrete_variables  = [ ("njet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("nCleanJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_cleanmask)"), ("btagA", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4184)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
+discrete_variables  = [ ("nJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4)"), ("nCleanJet", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_cleanmask)"), ("btagA", "Sum$(Jet_pt>30&&Jet_jetId&&abs(Jet_eta)<2.4&&Jet_btagDeepB>0.4184&&Jet_cleanmask)"), ("nsoftJet", "Sum$(Jet_pt<30)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.

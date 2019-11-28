@@ -1,4 +1,8 @@
 import os
+import glob
+
+# from RootTools
+from RootTools.core.standard            import *
 
 # argparser
 import argparse
@@ -8,21 +12,18 @@ argParser.add_argument('--dir',         action='store', nargs='*', type=str, hel
 argParser.add_argument('--nFiles',      action='store', nargs='*', type=int, default=100, help="How many root files to merge." )
 options = argParser.parse_args()
 
-import nanoMET.tools.logger as _logger
-logger = _logger.get_logger(options.logLevel, logFile = None)
-
-# from RootTools
-from RootTools.core.standard            import *
-
-import glob
+# Logger
+import nanoMET.tools.logger as logger
+import RootTools.core.logger as logger_rt
+logger    = logger.get_logger(   args.logLevel, logFile = None)
+logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 def chunks(l, n):
     n = max(1, n)
     return (l[i:i+n] for i in xrange(0, len(l), n))
 
 filePath = str(options.dir[0])+'/*.root'
-
-files = glob.glob(filePath)
+files    = glob.glob(filePath)
 
 for i,c in enumerate(chunks(files, options.nFiles)):
     
@@ -38,6 +39,6 @@ for i,c in enumerate(chunks(files, options.nFiles)):
 
     inFiles = ' '.join(c)
     
-    print inFiles
+    logger.info( "Files: %s"%inFiles )
     os.system("haddnano.py %s %s"%(outFile, inFiles))
 
