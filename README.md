@@ -16,7 +16,6 @@ git cms-init
 cd $CMSSW_BASE/src
 git clone https://github.com/HephyAnalysisSW/Samples.git
 git clone https://github.com/HephyAnalysisSW/RootTools.git
-git clone https://github.com/HephyAnalysisSW/Analysis.git
 ```
 
 # nanoAOD-tools
