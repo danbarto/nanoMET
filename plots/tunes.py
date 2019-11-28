@@ -1,6 +1,39 @@
 
 tuneParams = {
 
+		#tune_Data_2016_Summer16_25nsV1_DATA_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1_2016_v21
+		#tune_MC_2016_Summer16_25nsV1_MC_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1_2016_v21
+		2016: {
+			'data':         [1.9034557745999647, 1.704569089762286, 1.5854229036413823, 1.4974876665993915, 1.673074548622476, 0.0015993706020479338, 0.6288393591242573],
+			'mc':           [1.6789559564013943, 1.543666136735388, 1.4728342034302846, 1.4983602533711493, 1.4758351625239376, 0.008039429222660197, 0.6698834337575063],
+			'jerData':      'Summer16_25nsV1_DATA',
+			'jerMC':        'Summer16_25nsV1_MC',
+			'jetThreshold': 15,
+			'year':         2016,
+		},
+
+		#tune_Data_2017_Fall17_V3_DATA_diMuon-looseLeptonVeto-onZ-BadEEJetVeto_sumPt15_max25_v1_2017_v21
+		#tune_MC_2017_Fall17_V3_MC_diMuon-looseLeptonVeto-onZ-BadEEJetVeto_sumPt15_max25_v1_2017_v21
+		2017: {
+			'data':         [1.9410724258735805, 1.878895369894863, 1.9122297708165825, 1.7090755971750793, 2.0004413703111146, -0.0001347239857148459, 0.6732736907156339],
+			'mc':           [1.7037614210331564, 1.7166071080686363, 1.6701114323915047, 1.502876236941622, 1.5780611987345947, -0.00012634174329968426, 0.6834329126092852],
+			'jerData':      'Fall17_V3_DATA',
+			'jerMC':        'Fall17_V3_MC',
+			'jetThreshold': 15,
+			'year':         2017,
+		},
+
+		#tune_Data_2018_Autumn18_V7b_DATA_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1_2018_v21
+		#tune_MC_2018_Autumn18_V7b_MC_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1_2018_v21
+		2018: {
+			'data':         [1.7597963093944353, 1.7529358941285436, 1.6542030082916106, 1.355947946214444, 1.62529299229821, 0.0003583146878367062, 0.6808117480506645],
+			'mc':           [1.8549938037723896, 1.6509411315853, 1.636437587406195, 1.4672590328655033, 1.247095140902097, -6.784962823364049e-05, 0.6354413715418223],
+			'jerData':      'Autumn18_V7b_DATA',
+			'jerMC':        'Autumn18_V7b_MC',
+			'jetThreshold': 15,
+			'year':         2018,
+		},
+
 		#tune_Data_2018_Autumn18_V7b_DATA_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1mod5_2018_v21
 		#tune_MC_2018_Autumn18_V7b_MC_diMuon-looseLeptonVeto-onZ_sumPt15_max25_v1mod5_2018_v21
 		20181: {
