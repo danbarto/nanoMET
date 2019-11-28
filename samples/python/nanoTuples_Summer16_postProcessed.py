@@ -29,7 +29,6 @@ dirs['DY_LO']           = ["DYJetsToLL_M50_LO_ext1"]
 dirs['Top']             = ["TTLep_pow_noSC", "T_tWch_ext", "TBar_tWch_ext"]
 dirs['diboson']         = ['VVTo2L2Nu_ext', 'WZTo3LNu_amcatnlo', 'WZTo1L3Nu']
 dirs['triboson']        = ['WWZ', 'WZZ', 'ZZZ']
-#dirs['WJets']           = ['WJetsToLNu']
 
 directories = { key : [ os.path.join( data_directory, postProcessing_directory, dir) for dir in dirs[key]] for key in dirs.keys()}
 
@@ -37,4 +36,3 @@ DY_LO_16            = Sample.fromDirectory(name="DY_LO",            treeName="Ev
 Top_16              = Sample.fromDirectory(name="Top",              treeName="Events", isData=False, color=color.TTJets,        texName="t(#bar{t})",               directory=directories['Top'])
 diboson_16          = Sample.fromDirectory(name="diboson",          treeName="Events", isData=False, color=color.diboson,       texName="diboson",                  directory=directories['diboson'])
 rare_16             = Sample.fromDirectory(name="rare",             treeName="Events", isData=False, color=color.rare,          texName="rare",                     directory=directories['triboson'])
-#WJets_16            = Sample.fromDirectory(name="WJets",            treeName="Events", isData=False, color=color.WJets,         texName="W+jets",                   directory=directories['WJets'])
