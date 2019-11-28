@@ -32,12 +32,13 @@ for file in os.listdir( respath ):
         pTdep    = "pTdep" in file
         version  = allSplit[-1]
         y        = allSplit[-2]
-        settings = "_".join(allSplit[7:-2])
+        tag      = allSplit[-3]
+        settings = "_".join(allSplit[7:-3])
 
         jetThreshold = int(allSplit[7].split("sumPt")[1])
         jer          = "_".join(allSplit[3:6])
 
-        key = {"year":y, "selection":sel, "pTdependent":pTdep, "version":version, "settings":settings, "jer":jer.replace("DATA","").replace("MC","")}
+        key = {"year":y, "selection":sel, "tag":tag, "pTdependent":pTdep, "version":version, "settings":settings, "jer":jer.replace("DATA","").replace("MC","")}
 
         year.update( {frozenset(key.items()):y} )
         jetThresh.update( {frozenset(key.items()):jetThreshold} )
