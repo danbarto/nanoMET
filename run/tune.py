@@ -70,7 +70,8 @@ elif args.year == 2017:
 
     if args.runData:
         from nanoMET.samples.nanoTuples_Run2017_31Mar2018_postProcessed import *
-        samples              = [DoubleMuon_Run2017BCDE]
+#        samples              = [DoubleMuon_Run2017BCDE]
+        samples              = [DoubleMuon_Run2017]
         jer                  = "Fall17_V3_DATA"
     else:
         from nanoMET.samples.nanoTuples_Fall17_postProcessed import *
@@ -88,12 +89,10 @@ elif args.year == 2018:
     if args.runData:
         from nanoMET.samples.nanoTuples_Run2018_17Sep2018_postProcessed import *
         samples              = [DoubleMuon_Run2018]
-#        jer                  = "Autumn18_V1_DATA"
         jer                  = "Autumn18_V7b_DATA"
     else:
         from nanoMET.samples.nanoTuples_Autumn18_postProcessed import *
         samples              = [DY_LO_18, Top_18, diboson_18, rare_18]
-#        jer                  = "Autumn18_V1_MC"
         jer                  = "Autumn18_V7b_MC"
 
 # calculate setting
@@ -103,7 +102,7 @@ eventfilter     = getFilterCut( args.year, isData=args.runData )
 sel             = "&&".join([preselection, triggerSel, eventfilter])
 JR              = JetResolution(jer)
 version         = postProcessing_directory.split("/")[0]
-outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i"%("Data" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig)
+outfile         = "results/tune_%s_%i_%s_%s_sumPt%i_max%i"%("DATA" if args.runData else "MC", args.year, jer, args.selection, args.jetThreshold, args.maxSig)
 if args.addon:
     outfile    += "_"+str(args.addon)
 if args.pTdependent:
