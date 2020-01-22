@@ -16,7 +16,7 @@ def get_logger(logLevel, logFile = None, add_sync_level = False):
     logging.Logger.sync = lambda inst, msg, *args, **kwargs: inst.log(logging.SYNC, msg, *args, **kwargs)
     logging.sync = lambda inst, msg, *args, **kwargs: inst.log(logging.SYNC, msg, *args, **kwargs)
 
-    logger = logging.getLogger('TopEFT')
+    logger = logging.getLogger('nanoMET')
 
     numeric_level = getattr(logging, logLevel.upper(), None)
     if not isinstance(numeric_level, int):
